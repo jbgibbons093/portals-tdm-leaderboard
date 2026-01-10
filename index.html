@@ -419,6 +419,7 @@
       if (msg.startsWith('time_')) {
         // time_123 -> elapsed seconds
         const elapsed = parseFloat(msg.substring(5));
+        document.getElementById('debug').textContent = 'Parsed: ' + elapsed + ' | Remaining: ' + (600 - elapsed);
         if (!isNaN(elapsed)) {
           setElapsedTime(elapsed);
           console.log('[Leaderboard] Time update - elapsed:', elapsed, '- remaining:', timeRemaining);
