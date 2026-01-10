@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TDM Leaderboard</title>
+
+  <!-- Portals SDK -->
+  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    .leaderboard-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      height: 48px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(20,20,30,0.95) 100%);
+      border-bottom: 2px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .team-score {
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      height: 100%;
+      min-width: 140px;
+    }
+
+    .red-team {
+      background: linear-gradient(135deg, rgba(220,38,38,0.3) 0%, rgba(185,28,28,0.2) 100%);
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .red-team .team-label {
+      color: #ef4444;
+      text-shadow: 0 0 10px rgba(239,68,68,0.5);
+    }
+
+    .red-team .score {
+      color: #fca5a5;
+      text-shadow: 0 0 15px rgba(239,68,68,0.7);
+    }
+
+    .blue-team {
+      background: linear-gradient(135deg, rgba(37,99,235,0.3) 0%, rgba(29,78,216,0.2) 100%);
+      border-left: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .blue-team .team-label {
+      color: #3b82f6;
+      text-shadow: 0 0 10px rgba(59,130,246,0.5);
+    }
+
+    .blue-team .score {
+      color: #93c5fd;
+      text-shadow: 0 0 15px rgba(59,130,246,0.7);
+    }
+
+    .team-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-right: 12px;
+    }
+
+    .score {
+      font-size: 28px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 20px;
+      min-width: 100px;
+      background: rgba(255,255,255,0.05);
+      height: 100%;
+      border-left: 1px solid rgba(255,255,255,0.1);
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .timer-label {
+      font-size: 9px;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .timer {
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffffff;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+
+    .timer.warning {
+      color: #fbbf24;
+      text-shadow: 0 0 15px rgba(251,191,36,0.7);
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    .timer.critical {
+      color: #ef4444;
+      text-shadow: 0 0 15px rgba(239,68,68,0.7);
+      animation: pulse 0.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .vs-divider {
+      font-size: 14px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.3);
+      padding: 0 8px;
+    }
+
+    /* Score change animation */
+    .score.changed {
+      animation: scoreFlash 0.3s ease-out;
+    }
+
+    @keyframes scoreFlash {
+      0% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+
+    /* Game over overlay */
+    .game-over {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    .game-over.show {
+      display: flex;
+    }
+
+    .winner-text {
+      font-size: 48px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      margin-bottom: 20px;
+    }
+
+    .winner-text.red {
+      color: #ef4444;
+      text-shadow: 0 0 30px rgba(239,68,68,0.8);
+    }
+
+    .winner-text.blue {
+      color: #3b82f6;
+      text-shadow: 0 0 30px rgba(59,130,246,0.8);
+    }
+
+    .winner-text.tie {
+      color: #a855f7;
+      text-shadow: 0 0 30px rgba(168,85,247,0.8);
+    }
+
+    .final-score {
+      font-size: 24px;
+      color: rgba(255,255,255,0.7);
+    }
+  </style>
+</head>
+<body>
+  <div class="leaderboard-bar">
+    <div class="team-score red-team">
+      <span class="team-label">RED</span>
+      <span class="score" id="redScore">0</span>
+    </div>
+
+    <div class="timer-section">
+      <span class="timer-label">Time</span>
+      <span class="timer" id="timer">10:00</span>
+    </div>
+
+    <div class="team-score blue-team">
+      <span class="score" id="blueScore">0</span>
+      <span class="team-label" style="margin-right: 0; margin-left: 12px;">BLUE</span>
+    </div>
+  </div>
+
+  <div class="game-over" id="gameOver">
+    <div class="winner-text" id="winnerText">RED WINS!</div>
+    <div class="final-score" id="finalScore">50 - 32</div>
+  </div>
+
+  <script>
+    // ===========================================
+    // TDM Leaderboard for Portals
+    // ===========================================
+
+    let redScore = 0;
+    let blueScore = 0;
+    let timeRemaining = 600; // 10 minutes in seconds
+    let timerInterval = null;
+    let gameActive = true;
+
+    // DOM elements
+    const redScoreEl = document.getElementById('redScore');
+    const blueScoreEl = document.getElementById('blueScore');
+    const timerEl = document.getElementById('timer');
+    const gameOverEl = document.getElementById('gameOver');
+    const winnerTextEl = document.getElementById('winnerText');
+    const finalScoreEl = document.getElementById('finalScore');
+
+    // ===========================================
+    // Timer Functions
+    // ===========================================
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updateTimerDisplay() {
+      timerEl.textContent = formatTime(timeRemaining);
+
+      // Warning states
+      timerEl.classList.remove('warning', 'critical');
+      if (timeRemaining <= 60) {
+        timerEl.classList.add('critical');
+      } else if (timeRemaining <= 120) {
+        timerEl.classList.add('warning');
+      }
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+
+      timerInterval = setInterval(() => {
+        if (!gameActive) return;
+
+        timeRemaining--;
+        updateTimerDisplay();
+
+        if (timeRemaining <= 0) {
+          endGameByTimer();
+        }
+      }, 1000);
+    }
+
+    function endGameByTimer() {
+      gameActive = false;
+      clearInterval(timerInterval);
+
+      // Determine winner
+      let winner;
+      if (redScore > blueScore) {
+        winner = 'red';
+        winnerTextEl.textContent = 'RED WINS!';
+        winnerTextEl.className = 'winner-text red';
+      } else if (blueScore > redScore) {
+        winner = 'blue';
+        winnerTextEl.textContent = 'BLUE WINS!';
+        winnerTextEl.className = 'winner-text blue';
+      } else {
+        winner = 'tie';
+        winnerTextEl.textContent = 'TIE GAME!';
+        winnerTextEl.className = 'winner-text tie';
+      }
+
+      finalScoreEl.textContent = `${redScore} - ${blueScore}`;
+      gameOverEl.classList.add('show');
+
+      // Send winner task to Portals
+      sendTaskUpdate(`timer_${winner}_wins`, 'SetNotActiveToActive');
+    }
+
+    // ===========================================
+    // Score Functions
+    // ===========================================
+
+    function updateScore(team, newScore) {
+      if (!gameActive) return;
+
+      const scoreEl = team === 'red' ? redScoreEl : blueScoreEl;
+      const oldScore = team === 'red' ? redScore : blueScore;
+
+      if (team === 'red') {
+        redScore = newScore;
+      } else {
+        blueScore = newScore;
+      }
+
+      scoreEl.textContent = newScore;
+
+      // Animate score change
+      if (newScore !== oldScore) {
+        scoreEl.classList.remove('changed');
+        void scoreEl.offsetWidth; // Trigger reflow
+        scoreEl.classList.add('changed');
+      }
+
+      // Check for score-based win (first to 50)
+      if (newScore >= 50) {
+        endGameByScore(team);
+      }
+    }
+
+    function endGameByScore(winner) {
+      gameActive = false;
+      clearInterval(timerInterval);
+
+      if (winner === 'red') {
+        winnerTextEl.textContent = 'RED WINS!';
+        winnerTextEl.className = 'winner-text red';
+      } else {
+        winnerTextEl.textContent = 'BLUE WINS!';
+        winnerTextEl.className = 'winner-text blue';
+      }
+
+      finalScoreEl.textContent = `${redScore} - ${blueScore}`;
+      gameOverEl.classList.add('show');
+    }
+
+    // ===========================================
+    // Portals SDK Integration
+    // ===========================================
+
+    function sendTaskUpdate(taskName, taskState) {
+      if (typeof PortalsSdk === 'undefined') {
+        console.log('[Leaderboard] SDK not available, would send:', taskName, taskState);
+        return;
+      }
+
+      try {
+        PortalsSdk.sendMessageToUnity(JSON.stringify({
+          TaskName: taskName,
+          TaskTargetState: taskState
+        }));
+        console.log('[Leaderboard] Sent task:', taskName, '->', taskState);
+      } catch (e) {
+        console.error('[Leaderboard] Failed to send task:', e);
+      }
+    }
+
+    function handlePortalsMessage(message) {
+      console.log('[Leaderboard] Received:', message);
+
+      let data = message;
+
+      // Parse if string
+      if (typeof message === 'string') {
+        try {
+          data = JSON.parse(message);
+        } catch (e) {
+          console.log('[Leaderboard] Plain string message:', message);
+          return;
+        }
+      }
+
+      // Handle different actions
+      if (data.action) {
+        switch (data.action) {
+          case 'updateRedScore':
+            updateScore('red', data.score);
+            break;
+
+          case 'updateBlueScore':
+            updateScore('blue', data.score);
+            break;
+
+          case 'updateScores':
+            if (data.red !== undefined) updateScore('red', data.red);
+            if (data.blue !== undefined) updateScore('blue', data.blue);
+            break;
+
+          case 'setTimer':
+            timeRemaining = data.seconds;
+            updateTimerDisplay();
+            break;
+
+          case 'startTimer':
+            startTimer();
+            break;
+
+          case 'stopTimer':
+            clearInterval(timerInterval);
+            break;
+
+          case 'resetGame':
+            resetGame();
+            break;
+
+          case 'endGame':
+            if (data.winner) {
+              endGameByScore(data.winner);
+            } else {
+              endGameByTimer();
+            }
+            break;
+        }
+      }
+    }
+
+    function resetGame() {
+      gameActive = true;
+      redScore = 0;
+      blueScore = 0;
+      timeRemaining = 600;
+
+      redScoreEl.textContent = '0';
+      blueScoreEl.textContent = '0';
+      updateTimerDisplay();
+      gameOverEl.classList.remove('show');
+
+      startTimer();
+    }
+
+    // ===========================================
+    // Initialize
+    // ===========================================
+
+    // Set up Portals message listener
+    if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
+      PortalsSdk.setMessageListener(handlePortalsMessage);
+      console.log('[Leaderboard] SDK listener registered');
+    } else {
+      // Fallback for testing
+      window.addEventListener('message', (e) => handlePortalsMessage(e.data));
+      console.log('[Leaderboard] Using fallback listener');
+    }
+
+    // Initial display
+    updateTimerDisplay();
+
+    // Notify Portals that leaderboard is ready
+    sendTaskUpdate('leaderboard_ready', 'SetNotActiveToCompleted');
+
+    // Auto-start timer (can be disabled if Portals should control start)
+    startTimer();
+
+    console.log('[Leaderboard] Initialized - 10 minute TDM');
+  </script>
+</body>
+</html>
