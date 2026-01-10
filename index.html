@@ -251,7 +251,9 @@
     let blueScore = 0;
     let timeRemaining = 600; // 10 minutes in seconds
     let timerInterval = null;
+    let syncInterval = null;
     let gameActive = true;
+    let isHost = false; // First player becomes host and runs authoritative timer
 
     // DOM elements
     const redScoreEl = document.getElementById('redScore');
@@ -393,6 +395,28 @@
       }
     }
 
+    // Send time sync to Portals (host only)
+    function sendTimeSync() {
+      if (!isHost || !gameActive) return;
+
+      // Send current time to Portals to store in Time_Remaining variable
+      sendTaskUpdate('sync_time_' + timeRemaining, 'SetNotActiveToActive');
+      console.log('[Leaderboard] Host synced time:', timeRemaining);
+    }
+
+    // Start syncing time back to Portals (host only)
+    function startTimeSync() {
+      if (syncInterval) clearInterval(syncInterval);
+
+      // Sync every 10 seconds
+      syncInterval = setInterval(() => {
+        sendTimeSync();
+      }, 10000);
+
+      // Also sync immediately
+      sendTimeSync();
+    }
+
     function handlePortalsMessage(message) {
       console.log('[Leaderboard] Received:', message);
 
@@ -435,6 +459,36 @@
 
           case 'stopTimer':
             clearInterval(timerInterval);
+            break;
+
+          case 'startAsHost':
+            // First player becomes host - runs authoritative timer
+            isHost = true;
+            console.log('[Leaderboard] Started as HOST - running authoritative timer');
+            startTimer();
+            startTimeSync();
+            break;
+
+          case 'syncTime':
+            // Late joiner - sync to host's time
+            if (!isHost) {
+              timeRemaining = data.time;
+              updateTimerDisplay();
+              startTimer(); // Start local timer from synced time
+              console.log('[Leaderboard] Synced time from host:', data.time);
+            }
+            break;
+
+          case 'syncState':
+            // Full state sync for late joiners
+            if (data.time !== undefined) timeRemaining = data.time;
+            if (data.red !== undefined) redScore = data.red;
+            if (data.blue !== undefined) blueScore = data.blue;
+            redScoreEl.textContent = redScore;
+            blueScoreEl.textContent = blueScore;
+            updateTimerDisplay();
+            if (!isHost) startTimer();
+            console.log('[Leaderboard] Full state sync:', data);
             break;
 
           case 'resetGame':
@@ -484,12 +538,10 @@
     updateTimerDisplay();
 
     // Notify Portals that leaderboard is ready
+    // Portals will respond with either 'startAsHost' (first player) or 'syncState' (late joiner)
     sendTaskUpdate('leaderboard_ready', 'SetNotActiveToCompleted');
 
-    // Auto-start timer (can be disabled if Portals should control start)
-    startTimer();
-
-    console.log('[Leaderboard] Initialized - 10 minute TDM');
+    console.log('[Leaderboard] Initialized - waiting for Portals to assign host/sync');
   </script>
 </body>
 </html>
