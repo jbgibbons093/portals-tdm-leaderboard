@@ -247,13 +247,17 @@
     // TDM Leaderboard for Portals
     // ===========================================
 
+    // Reference point for smaller timestamp numbers (Sept 2023)
+    const TIME_REFERENCE = 1700000000;
+    const GAME_DURATION = 600; // 10 minutes in seconds
+
     let redScore = 0;
     let blueScore = 0;
-    let timeRemaining = 600; // 10 minutes in seconds
+    let timeRemaining = GAME_DURATION;
     let timerInterval = null;
-    let syncInterval = null;
     let gameActive = true;
-    let isHost = false; // First player becomes host and runs authoritative timer
+    let isHost = false;
+    let gameStartTime = null; // Timestamp when game started (relative to TIME_REFERENCE)
 
     // DOM elements
     const redScoreEl = document.getElementById('redScore');
@@ -285,13 +289,26 @@
       }
     }
 
+    // Get current time relative to reference
+    function getCurrentTime() {
+      return Math.floor(Date.now() / 1000) - TIME_REFERENCE;
+    }
+
+    // Calculate remaining time from start time
+    function calculateTimeRemaining() {
+      if (gameStartTime === null) return GAME_DURATION;
+      const elapsed = getCurrentTime() - gameStartTime;
+      return Math.max(0, GAME_DURATION - elapsed);
+    }
+
     function startTimer() {
       if (timerInterval) clearInterval(timerInterval);
 
       timerInterval = setInterval(() => {
         if (!gameActive) return;
 
-        timeRemaining--;
+        // Calculate time remaining from start timestamp
+        timeRemaining = calculateTimeRemaining();
         updateTimerDisplay();
 
         if (timeRemaining <= 0) {
@@ -395,26 +412,14 @@
       }
     }
 
-    // Send time sync to Portals (host only)
-    function sendTimeSync() {
-      if (!isHost || !gameActive) return;
+    // Send game start time to Portals (host only, called once)
+    function sendGameStartTime() {
+      if (!isHost) return;
 
-      // Send current time to Portals to store in Time_Remaining variable
-      sendTaskUpdate('sync_time_' + timeRemaining, 'SetNotActiveToActive');
-      console.log('[Leaderboard] Host synced time:', timeRemaining);
-    }
-
-    // Start syncing time back to Portals (host only)
-    function startTimeSync() {
-      if (syncInterval) clearInterval(syncInterval);
-
-      // Sync every 10 seconds
-      syncInterval = setInterval(() => {
-        sendTimeSync();
-      }, 10000);
-
-      // Also sync immediately
-      sendTimeSync();
+      // Send start time to Portals to store in Game_Start_Time variable
+      // Using task name to encode the value (Portals will parse this)
+      sendTaskUpdate('set_start_time_' + gameStartTime, 'SetNotActiveToActive');
+      console.log('[Leaderboard] Host sent game start time:', gameStartTime);
     }
 
     function handlePortalsMessage(message) {
@@ -462,33 +467,44 @@
             break;
 
           case 'startAsHost':
-            // First player becomes host - runs authoritative timer
+            // First player becomes host - records game start time
             isHost = true;
-            console.log('[Leaderboard] Started as HOST - running authoritative timer');
+            gameStartTime = getCurrentTime();
+            console.log('[Leaderboard] Started as HOST - game start time:', gameStartTime);
+
+            // Send start time to Portals for other players
+            sendGameStartTime();
+
+            // Start timer (will calculate from gameStartTime)
+            timeRemaining = calculateTimeRemaining();
+            updateTimerDisplay();
             startTimer();
-            startTimeSync();
             break;
 
           case 'syncTime':
-            // Late joiner - sync to host's time
-            if (!isHost) {
-              timeRemaining = data.time;
+            // Late joiner - receive game start time and calculate remaining
+            if (!isHost && data.startTime !== undefined) {
+              gameStartTime = data.startTime;
+              timeRemaining = calculateTimeRemaining();
               updateTimerDisplay();
-              startTimer(); // Start local timer from synced time
-              console.log('[Leaderboard] Synced time from host:', data.time);
+              startTimer();
+              console.log('[Leaderboard] Synced to game start time:', gameStartTime, '- remaining:', timeRemaining);
             }
             break;
 
           case 'syncState':
-            // Full state sync for late joiners
-            if (data.time !== undefined) timeRemaining = data.time;
+            // Full state sync for late joiners (includes start time)
+            if (data.startTime !== undefined) {
+              gameStartTime = data.startTime;
+              timeRemaining = calculateTimeRemaining();
+            }
             if (data.red !== undefined) redScore = data.red;
             if (data.blue !== undefined) blueScore = data.blue;
             redScoreEl.textContent = redScore;
             blueScoreEl.textContent = blueScore;
             updateTimerDisplay();
             if (!isHost) startTimer();
-            console.log('[Leaderboard] Full state sync:', data);
+            console.log('[Leaderboard] Full state sync - start time:', gameStartTime, '- remaining:', timeRemaining);
             break;
 
           case 'resetGame':
@@ -510,8 +526,14 @@
       gameActive = true;
       redScore = 0;
       blueScore = 0;
-      timeRemaining = 600;
 
+      // Reset game start time if host
+      if (isHost) {
+        gameStartTime = getCurrentTime();
+        sendGameStartTime();
+      }
+
+      timeRemaining = calculateTimeRemaining();
       redScoreEl.textContent = '0';
       blueScoreEl.textContent = '0';
       updateTimerDisplay();
