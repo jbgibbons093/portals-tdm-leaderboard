@@ -412,57 +412,56 @@
         }
       }
 
-      // Handle different actions
-      if (data.action) {
-        switch (data.action) {
-          case 'updateRedScore':
-            updateScore('red', data.score);
-            break;
+      // Handle simple format messages (no JSON - colons break Portals parser)
+      // Format: "prefix_value" or "prefix_value1_value2_value3"
+      const msg = typeof data === 'string' ? data : JSON.stringify(data);
 
-          case 'updateBlueScore':
-            updateScore('blue', data.score);
-            break;
-
-          case 'updateScores':
-            if (data.red !== undefined) updateScore('red', data.red);
-            if (data.blue !== undefined) updateScore('blue', data.blue);
-            break;
-
-          case 'updateTime':
-            // Server sends elapsed seconds, we calculate remaining
-            if (data.elapsed !== undefined) {
-              const elapsed = parseFloat(data.elapsed);
-              setElapsedTime(elapsed);
-              console.log('[Leaderboard] Time update - elapsed:', elapsed, '- remaining:', timeRemaining);
-            }
-            break;
-
-          case 'syncState':
-            // Full state sync (time + scores)
-            if (data.elapsed !== undefined) setElapsedTime(data.elapsed);
-            if (data.red !== undefined) {
-              redScore = data.red;
-              redScoreEl.textContent = redScore;
-            }
-            if (data.blue !== undefined) {
-              blueScore = data.blue;
-              blueScoreEl.textContent = blueScore;
-            }
-            updateTimerDisplay();
-            console.log('[Leaderboard] State sync - elapsed:', data.elapsed, '- remaining:', timeRemaining);
-            break;
-
-          case 'resetGame':
-            resetGame();
-            break;
-
-          case 'endGame':
-            if (data.winner) {
-              endGameByScore(data.winner);
-            } else {
-              endGameByTimer();
-            }
-            break;
+      if (msg.startsWith('time_')) {
+        // time_123 -> elapsed seconds
+        const elapsed = parseFloat(msg.substring(5));
+        if (!isNaN(elapsed)) {
+          setElapsedTime(elapsed);
+          console.log('[Leaderboard] Time update - elapsed:', elapsed, '- remaining:', timeRemaining);
+        }
+      } else if (msg.startsWith('red_')) {
+        // red_5 -> red score
+        const score = parseFloat(msg.substring(4));
+        if (!isNaN(score)) {
+          updateScore('red', score);
+        }
+      } else if (msg.startsWith('blue_')) {
+        // blue_3 -> blue score
+        const score = parseFloat(msg.substring(5));
+        if (!isNaN(score)) {
+          updateScore('blue', score);
+        }
+      } else if (msg.startsWith('sync_')) {
+        // sync_elapsed_red_blue -> full sync
+        const parts = msg.substring(5).split('_');
+        if (parts.length >= 3) {
+          const elapsed = parseFloat(parts[0]);
+          const red = parseFloat(parts[1]);
+          const blue = parseFloat(parts[2]);
+          if (!isNaN(elapsed)) setElapsedTime(elapsed);
+          if (!isNaN(red)) {
+            redScore = red;
+            redScoreEl.textContent = red;
+          }
+          if (!isNaN(blue)) {
+            blueScore = blue;
+            blueScoreEl.textContent = blue;
+          }
+          updateTimerDisplay();
+          console.log('[Leaderboard] Sync - elapsed:', elapsed, 'red:', red, 'blue:', blue);
+        }
+      } else if (msg === 'reset') {
+        resetGame();
+      } else {
+        // Try parsing as just a number (elapsed seconds)
+        const num = parseFloat(msg);
+        if (!isNaN(num)) {
+          setElapsedTime(num);
+          console.log('[Leaderboard] Raw number - elapsed:', num);
         }
       }
     }
