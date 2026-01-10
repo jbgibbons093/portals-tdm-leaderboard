@@ -236,6 +236,9 @@
     </div>
   </div>
 
+  <!-- DEBUG: Remove after testing -->
+  <div id="debug" style="position:fixed;bottom:10px;left:10px;background:rgba(0,0,0,0.8);color:lime;padding:5px 10px;font-size:12px;font-family:monospace;z-index:999;">Waiting for messages...</div>
+
   <div class="game-over" id="gameOver">
     <div class="winner-text" id="winnerText">RED WINS!</div>
     <div class="final-score" id="finalScore">50 - 32</div>
@@ -391,6 +394,12 @@
     function handlePortalsMessage(message) {
       console.log('[Leaderboard] Received:', message);
 
+      // DEBUG: Show on screen
+      const debugEl = document.getElementById('debug');
+      if (debugEl) {
+        debugEl.textContent = 'Received: ' + JSON.stringify(message).substring(0, 50);
+      }
+
       let data = message;
 
       // Parse if string
@@ -422,8 +431,9 @@
           case 'updateTime':
             // Server sends elapsed seconds, we calculate remaining
             if (data.elapsed !== undefined) {
-              setElapsedTime(data.elapsed);
-              console.log('[Leaderboard] Time update - elapsed:', data.elapsed, '- remaining:', timeRemaining);
+              const elapsed = parseFloat(data.elapsed);
+              setElapsedTime(elapsed);
+              console.log('[Leaderboard] Time update - elapsed:', elapsed, '- remaining:', timeRemaining);
             }
             break;
 
