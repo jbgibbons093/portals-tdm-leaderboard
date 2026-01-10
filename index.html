@@ -159,16 +159,19 @@
     /* Game over overlay */
     .game-over {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.9);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(20,20,30,0.98) 100%);
       display: none;
       justify-content: center;
       align-items: center;
       flex-direction: column;
       z-index: 100;
+      padding: 40px 60px;
+      border-radius: 16px;
+      border: 2px solid rgba(255,255,255,0.1);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.8);
     }
 
     .game-over.show {
@@ -180,7 +183,7 @@
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 4px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .winner-text.red {
@@ -201,6 +204,15 @@
     .final-score {
       font-size: 24px;
       color: rgba(255,255,255,0.7);
+      margin-bottom: 24px;
+    }
+
+    .refresh-prompt {
+      font-size: 16px;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      animation: pulse 2s ease-in-out infinite;
     }
   </style>
 </head>
@@ -227,6 +239,7 @@
   <div class="game-over" id="gameOver">
     <div class="winner-text" id="winnerText">RED WINS!</div>
     <div class="final-score" id="finalScore">50 - 32</div>
+    <div class="refresh-prompt">Refresh to play again</div>
   </div>
 
   <script>
