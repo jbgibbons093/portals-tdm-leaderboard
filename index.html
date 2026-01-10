@@ -245,19 +245,15 @@
   <script>
     // ===========================================
     // TDM Leaderboard for Portals
+    // Server-side timer approach - Portals controls the clock
     // ===========================================
 
-    // Reference point for smaller timestamp numbers (Sept 2023)
-    const TIME_REFERENCE = 1700000000;
     const GAME_DURATION = 600; // 10 minutes in seconds
 
     let redScore = 0;
     let blueScore = 0;
     let timeRemaining = GAME_DURATION;
-    let timerInterval = null;
     let gameActive = true;
-    let isHost = false;
-    let gameStartTime = null; // Timestamp when game started (relative to TIME_REFERENCE)
 
     // DOM elements
     const redScoreEl = document.getElementById('redScore');
@@ -289,37 +285,18 @@
       }
     }
 
-    // Get current time relative to reference
-    function getCurrentTime() {
-      return Math.floor(Date.now() / 1000) - TIME_REFERENCE;
-    }
+    // Update time from server-provided elapsed seconds
+    function setElapsedTime(elapsed) {
+      timeRemaining = Math.max(0, GAME_DURATION - elapsed);
+      updateTimerDisplay();
 
-    // Calculate remaining time from start time
-    function calculateTimeRemaining() {
-      if (gameStartTime === null) return GAME_DURATION;
-      const elapsed = getCurrentTime() - gameStartTime;
-      return Math.max(0, GAME_DURATION - elapsed);
-    }
-
-    function startTimer() {
-      if (timerInterval) clearInterval(timerInterval);
-
-      timerInterval = setInterval(() => {
-        if (!gameActive) return;
-
-        // Calculate time remaining from start timestamp
-        timeRemaining = calculateTimeRemaining();
-        updateTimerDisplay();
-
-        if (timeRemaining <= 0) {
-          endGameByTimer();
-        }
-      }, 1000);
+      if (timeRemaining <= 0 && gameActive) {
+        endGameByTimer();
+      }
     }
 
     function endGameByTimer() {
       gameActive = false;
-      clearInterval(timerInterval);
 
       // Determine winner
       let winner;
@@ -377,7 +354,6 @@
 
     function endGameByScore(winner) {
       gameActive = false;
-      clearInterval(timerInterval);
 
       if (winner === 'red') {
         winnerTextEl.textContent = 'RED WINS!';
@@ -412,16 +388,6 @@
       }
     }
 
-    // Send game start time to Portals (host only, called once)
-    function sendGameStartTime() {
-      if (!isHost) return;
-
-      // Send start time to Portals to store in Game_Start_Time variable
-      // Using task name to encode the value (Portals will parse this)
-      sendTaskUpdate('set_start_time_' + gameStartTime, 'SetNotActiveToActive');
-      console.log('[Leaderboard] Host sent game start time:', gameStartTime);
-    }
-
     function handlePortalsMessage(message) {
       console.log('[Leaderboard] Received:', message);
 
@@ -453,58 +419,27 @@
             if (data.blue !== undefined) updateScore('blue', data.blue);
             break;
 
-          case 'setTimer':
-            timeRemaining = data.seconds;
-            updateTimerDisplay();
-            break;
-
-          case 'startTimer':
-            startTimer();
-            break;
-
-          case 'stopTimer':
-            clearInterval(timerInterval);
-            break;
-
-          case 'startAsHost':
-            // First player becomes host - records game start time
-            isHost = true;
-            gameStartTime = getCurrentTime();
-            console.log('[Leaderboard] Started as HOST - game start time:', gameStartTime);
-
-            // Send start time to Portals for other players
-            sendGameStartTime();
-
-            // Start timer (will calculate from gameStartTime)
-            timeRemaining = calculateTimeRemaining();
-            updateTimerDisplay();
-            startTimer();
-            break;
-
-          case 'syncTime':
-            // Late joiner - receive game start time and calculate remaining
-            if (!isHost && data.startTime !== undefined) {
-              gameStartTime = data.startTime;
-              timeRemaining = calculateTimeRemaining();
-              updateTimerDisplay();
-              startTimer();
-              console.log('[Leaderboard] Synced to game start time:', gameStartTime, '- remaining:', timeRemaining);
+          case 'updateTime':
+            // Server sends elapsed seconds, we calculate remaining
+            if (data.elapsed !== undefined) {
+              setElapsedTime(data.elapsed);
+              console.log('[Leaderboard] Time update - elapsed:', data.elapsed, '- remaining:', timeRemaining);
             }
             break;
 
           case 'syncState':
-            // Full state sync for late joiners (includes start time)
-            if (data.startTime !== undefined) {
-              gameStartTime = data.startTime;
-              timeRemaining = calculateTimeRemaining();
+            // Full state sync (time + scores)
+            if (data.elapsed !== undefined) setElapsedTime(data.elapsed);
+            if (data.red !== undefined) {
+              redScore = data.red;
+              redScoreEl.textContent = redScore;
             }
-            if (data.red !== undefined) redScore = data.red;
-            if (data.blue !== undefined) blueScore = data.blue;
-            redScoreEl.textContent = redScore;
-            blueScoreEl.textContent = blueScore;
+            if (data.blue !== undefined) {
+              blueScore = data.blue;
+              blueScoreEl.textContent = blueScore;
+            }
             updateTimerDisplay();
-            if (!isHost) startTimer();
-            console.log('[Leaderboard] Full state sync - start time:', gameStartTime, '- remaining:', timeRemaining);
+            console.log('[Leaderboard] State sync - elapsed:', data.elapsed, '- remaining:', timeRemaining);
             break;
 
           case 'resetGame':
@@ -526,20 +461,15 @@
       gameActive = true;
       redScore = 0;
       blueScore = 0;
+      timeRemaining = GAME_DURATION;
 
-      // Reset game start time if host
-      if (isHost) {
-        gameStartTime = getCurrentTime();
-        sendGameStartTime();
-      }
-
-      timeRemaining = calculateTimeRemaining();
       redScoreEl.textContent = '0';
       blueScoreEl.textContent = '0';
       updateTimerDisplay();
       gameOverEl.classList.remove('show');
 
-      startTimer();
+      // Notify Portals that game reset is ready
+      sendTaskUpdate('leaderboard_reset', 'SetNotActiveToCompleted');
     }
 
     // ===========================================
