@@ -813,7 +813,7 @@
     // ===========================================
 
     function requestSync() {
-      if (!myUsername) return;
+      if (mySlot === 0) return;
       sendTaskUpdate('request_sync', 'SetNotActiveToActive');
     }
 
