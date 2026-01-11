@@ -866,6 +866,9 @@
 
       const msgStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
 
+      // Debug ALL received messages
+      debug('Recv: ' + msgStr.substring(0, 40));
+
       // Message formats:
       // my_slot_X               - Slot X assigned to this player (1-8)
       // sync_C1_T1_R1_C2_T2_R2... - Full slot sync (C=claimed, T=team, R=ready)
