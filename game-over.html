@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Over</title>
+
+  <!-- Portals SDK -->
+  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .game-over-box {
+      background: linear-gradient(180deg, rgba(0,0,0,0.98) 0%, rgba(20,20,30,0.99) 100%);
+      padding: 80px 120px;
+      border-radius: 24px;
+      border: 3px solid rgba(255,255,255,0.2);
+      box-shadow: 0 16px 80px rgba(0,0,0,0.9);
+      text-align: center;
+      animation: slideIn 0.5s ease-out;
+    }
+
+    @keyframes slideIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(-30px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .winner-text {
+      font-size: 84px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 8px;
+      margin-bottom: 30px;
+    }
+
+    .winner-text.red {
+      color: #ef4444;
+      text-shadow: 0 0 40px rgba(239,68,68,0.8), 0 0 80px rgba(239,68,68,0.4);
+    }
+
+    .winner-text.blue {
+      color: #3b82f6;
+      text-shadow: 0 0 40px rgba(59,130,246,0.8), 0 0 80px rgba(59,130,246,0.4);
+    }
+
+    .winner-text.tie {
+      color: #a855f7;
+      text-shadow: 0 0 40px rgba(168,85,247,0.8), 0 0 80px rgba(168,85,247,0.4);
+    }
+
+    .final-score {
+      font-size: 48px;
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 40px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .score-red {
+      color: #fca5a5;
+    }
+
+    .score-blue {
+      color: #93c5fd;
+    }
+
+    .score-divider {
+      color: rgba(255,255,255,0.5);
+      margin: 0 20px;
+    }
+
+    .refresh-prompt {
+      font-size: 24px;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Loading state */
+    .loading {
+      display: flex;
+    }
+
+    .loaded {
+      display: none;
+    }
+
+    .game-over-box.ready .loading {
+      display: none;
+    }
+
+    .game-over-box.ready .loaded {
+      display: block;
+    }
+
+    .loading-text {
+      font-size: 36px;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    <div class="game-over-box" id="gameOverBox">
+      <!-- Loading state -->
+      <div class="loading">
+        <span class="loading-text">Loading...</span>
+      </div>
+
+      <!-- Loaded state -->
+      <div class="loaded">
+        <div class="winner-text" id="winnerText">RED WINS!</div>
+        <div class="final-score">
+          <span class="score-red" id="redScore">0</span>
+          <span class="score-divider">-</span>
+          <span class="score-blue" id="blueScore">0</span>
+        </div>
+        <div class="refresh-prompt">Refresh to play again</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===========================================
+    // Game Over Screen for Portals TDM
+    // Receives: gameover_winner_redScore_blueScore
+    // ===========================================
+
+    const gameOverBox = document.getElementById('gameOverBox');
+    const winnerTextEl = document.getElementById('winnerText');
+    const redScoreEl = document.getElementById('redScore');
+    const blueScoreEl = document.getElementById('blueScore');
+
+    function displayGameOver(winner, redScore, blueScore) {
+      // Set winner text and color
+      if (winner === 'red') {
+        winnerTextEl.textContent = 'RED WINS!';
+        winnerTextEl.className = 'winner-text red';
+      } else if (winner === 'blue') {
+        winnerTextEl.textContent = 'BLUE WINS!';
+        winnerTextEl.className = 'winner-text blue';
+      } else {
+        winnerTextEl.textContent = 'TIE GAME!';
+        winnerTextEl.className = 'winner-text tie';
+      }
+
+      // Set scores
+      redScoreEl.textContent = redScore;
+      blueScoreEl.textContent = blueScore;
+
+      // Show loaded state
+      gameOverBox.classList.add('ready');
+
+      console.log('[GameOver] Displayed:', winner, redScore, '-', blueScore);
+    }
+
+    function handleMessage(message) {
+      console.log('[GameOver] Received:', message);
+
+      let msg = message;
+
+      // Parse if string
+      if (typeof message === 'string') {
+        try {
+          msg = JSON.parse(message);
+        } catch (e) {
+          // Keep as string
+          msg = message;
+        }
+      }
+
+      // Convert to string for parsing
+      const msgStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
+
+      // Parse gameover message: gameover_winner_red_blue
+      if (msgStr.startsWith('gameover_')) {
+        const parts = msgStr.split('_');
+        if (parts.length >= 4) {
+          const winner = parts[1];      // 'red', 'blue', or 'tie'
+          const redScore = parts[2];    // red team score
+          const blueScore = parts[3];   // blue team score
+          displayGameOver(winner, redScore, blueScore);
+        }
+      }
+    }
+
+    // Set up Portals message listener
+    if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
+      PortalsSdk.setMessageListener(handleMessage);
+      console.log('[GameOver] SDK listener registered');
+    } else {
+      // Fallback for testing
+      window.addEventListener('message', (e) => handleMessage(e.data));
+      console.log('[GameOver] Using fallback listener');
+    }
+
+    // Notify Portals that game over screen is ready
+    if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
+      PortalsSdk.sendMessageToUnity(JSON.stringify({
+        TaskName: 'gameover_ready',
+        TaskTargetState: 'SetNotActiveToCompleted'
+      }));
+    }
+
+    console.log('[GameOver] Initialized - waiting for game data');
+  </script>
+</body>
+</html>

@@ -156,66 +156,6 @@
       100% { transform: scale(1); }
     }
 
-    /* Game over overlay - positioned below HUD bar */
-    .game-over {
-      position: fixed;
-      top: 100px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: linear-gradient(180deg, rgba(0,0,0,0.98) 0%, rgba(20,20,30,0.99) 100%);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      z-index: 100;
-      padding: 60px 100px;
-      border-radius: 20px;
-      border: 3px solid rgba(255,255,255,0.2);
-      box-shadow: 0 12px 60px rgba(0,0,0,0.9);
-      min-width: 500px;
-    }
-
-    .game-over.show {
-      display: flex;
-    }
-
-    .winner-text {
-      font-size: 72px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 6px;
-      margin-bottom: 20px;
-    }
-
-    .winner-text.red {
-      color: #ef4444;
-      text-shadow: 0 0 30px rgba(239,68,68,0.8);
-    }
-
-    .winner-text.blue {
-      color: #3b82f6;
-      text-shadow: 0 0 30px rgba(59,130,246,0.8);
-    }
-
-    .winner-text.tie {
-      color: #a855f7;
-      text-shadow: 0 0 30px rgba(168,85,247,0.8);
-    }
-
-    .final-score {
-      font-size: 36px;
-      color: rgba(255,255,255,0.8);
-      margin-bottom: 30px;
-      font-weight: 600;
-    }
-
-    .refresh-prompt {
-      font-size: 20px;
-      color: rgba(255,255,255,0.6);
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      animation: pulse 2s ease-in-out infinite;
-    }
   </style>
 </head>
 <body>
@@ -241,12 +181,6 @@
   <!-- DEBUG: Remove after testing -->
   <div id="debug" style="position:fixed;bottom:10px;left:10px;background:rgba(0,0,0,0.8);color:lime;padding:5px 10px;font-size:12px;font-family:monospace;z-index:999;">Waiting for messages...</div>
 
-  <div class="game-over" id="gameOver">
-    <div class="winner-text" id="winnerText">RED WINS!</div>
-    <div class="final-score" id="finalScore">50 - 32</div>
-    <div class="refresh-prompt">Refresh to play again</div>
-  </div>
-
   <script>
     // ===========================================
     // TDM Leaderboard for Portals
@@ -264,9 +198,6 @@
     const redScoreEl = document.getElementById('redScore');
     const blueScoreEl = document.getElementById('blueScore');
     const timerEl = document.getElementById('timer');
-    const gameOverEl = document.getElementById('gameOver');
-    const winnerTextEl = document.getElementById('winnerText');
-    const finalScoreEl = document.getElementById('finalScore');
 
     // ===========================================
     // Timer Functions
@@ -311,27 +242,20 @@
     function endGameByTimer() {
       gameActive = false;
 
-      // Determine winner
+      // Determine winner and send task to Portals
+      // Portals will show the game-over.html iframe
       let winner;
       if (redScore > blueScore) {
         winner = 'red';
-        winnerTextEl.textContent = 'RED WINS!';
-        winnerTextEl.className = 'winner-text red';
       } else if (blueScore > redScore) {
         winner = 'blue';
-        winnerTextEl.textContent = 'BLUE WINS!';
-        winnerTextEl.className = 'winner-text blue';
       } else {
         winner = 'tie';
-        winnerTextEl.textContent = 'TIE GAME!';
-        winnerTextEl.className = 'winner-text tie';
       }
-
-      finalScoreEl.textContent = `${redScore} - ${blueScore}`;
-      gameOverEl.classList.add('show');
 
       // Send winner task to Portals
       sendTaskUpdate(`timer_${winner}_wins`, 'SetNotActiveToActive');
+      console.log('[Leaderboard] Timer ended - winner:', winner, 'Score:', redScore, '-', blueScore);
     }
 
     // ===========================================
@@ -368,16 +292,10 @@
     function endGameByScore(winner) {
       gameActive = false;
 
-      if (winner === 'red') {
-        winnerTextEl.textContent = 'RED WINS!';
-        winnerTextEl.className = 'winner-text red';
-      } else {
-        winnerTextEl.textContent = 'BLUE WINS!';
-        winnerTextEl.className = 'winner-text blue';
-      }
-
-      finalScoreEl.textContent = `${redScore} - ${blueScore}`;
-      gameOverEl.classList.add('show');
+      // Send task to Portals - it will show game-over.html iframe
+      // Note: score-based wins use the existing RedWins/BlueWins tasks
+      // which are triggered by CheckWinner in Portals, not from here
+      console.log('[Leaderboard] Score win - winner:', winner, 'Score:', redScore, '-', blueScore);
     }
 
     // ===========================================
