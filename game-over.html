@@ -29,14 +29,10 @@
       left: 0;
       width: 100%;
       height: 100%;
-      display: none;
+      display: flex;
       justify-content: center;
       align-items: center;
       background: rgba(0, 0, 0, 0.5);
-    }
-
-    .overlay.show {
-      display: flex;
     }
 
     .game-over-box {
@@ -190,8 +186,7 @@
       redScoreEl.textContent = redScore;
       blueScoreEl.textContent = blueScore;
 
-      // Show the overlay and loaded state
-      document.querySelector('.overlay').classList.add('show');
+      // Show loaded state
       gameOverBox.classList.add('ready');
 
       console.log('[GameOver] Displayed:', winner, redScore, '-', blueScore);
@@ -235,6 +230,14 @@
       // Fallback for testing
       window.addEventListener('message', (e) => handleMessage(e.data));
       console.log('[GameOver] Using fallback listener');
+    }
+
+    // Notify Portals that game over screen is ready
+    if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
+      PortalsSdk.sendMessageToUnity(JSON.stringify({
+        TaskName: 'gameover_ready',
+        TaskTargetState: 'SetNotActiveToCompleted'
+      }));
     }
 
     console.log('[GameOver] Initialized - waiting for game data');

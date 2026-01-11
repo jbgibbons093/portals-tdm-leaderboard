@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TDM Leaderboard v2</title>
+  <title>TDM Leaderboard</title>
 
   <!-- Portals SDK -->
   <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
@@ -156,64 +156,6 @@
       100% { transform: scale(1); }
     }
 
-    /* Game over overlay */
-    .game-over {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(20,20,30,0.98) 100%);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      z-index: 100;
-      padding: 40px 60px;
-      border-radius: 16px;
-      border: 2px solid rgba(255,255,255,0.1);
-      box-shadow: 0 8px 40px rgba(0,0,0,0.8);
-    }
-
-    .game-over.show {
-      display: flex;
-    }
-
-    .winner-text {
-      font-size: 48px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 4px;
-      margin-bottom: 16px;
-    }
-
-    .winner-text.red {
-      color: #ef4444;
-      text-shadow: 0 0 30px rgba(239,68,68,0.8);
-    }
-
-    .winner-text.blue {
-      color: #3b82f6;
-      text-shadow: 0 0 30px rgba(59,130,246,0.8);
-    }
-
-    .winner-text.tie {
-      color: #a855f7;
-      text-shadow: 0 0 30px rgba(168,85,247,0.8);
-    }
-
-    .final-score {
-      font-size: 24px;
-      color: rgba(255,255,255,0.7);
-      margin-bottom: 24px;
-    }
-
-    .refresh-prompt {
-      font-size: 16px;
-      color: rgba(255,255,255,0.5);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      animation: pulse 2s ease-in-out infinite;
-    }
   </style>
 </head>
 <body>
@@ -239,12 +181,6 @@
   <!-- DEBUG: Remove after testing -->
   <div id="debug" style="position:fixed;bottom:10px;left:10px;background:rgba(0,0,0,0.8);color:lime;padding:5px 10px;font-size:12px;font-family:monospace;z-index:999;">Waiting for messages...</div>
 
-  <div class="game-over" id="gameOver">
-    <div class="winner-text" id="winnerText">RED WINS!</div>
-    <div class="final-score" id="finalScore">50 - 32</div>
-    <div class="refresh-prompt">Refresh to play again</div>
-  </div>
-
   <script>
     // ===========================================
     // TDM Leaderboard for Portals
@@ -262,9 +198,6 @@
     const redScoreEl = document.getElementById('redScore');
     const blueScoreEl = document.getElementById('blueScore');
     const timerEl = document.getElementById('timer');
-    const gameOverEl = document.getElementById('gameOver');
-    const winnerTextEl = document.getElementById('winnerText');
-    const finalScoreEl = document.getElementById('finalScore');
 
     // ===========================================
     // Timer Functions
@@ -309,27 +242,20 @@
     function endGameByTimer() {
       gameActive = false;
 
-      // Determine winner
+      // Determine winner and send task to Portals
+      // Portals will show the game-over.html iframe
       let winner;
       if (redScore > blueScore) {
         winner = 'red';
-        winnerTextEl.textContent = 'RED WINS!';
-        winnerTextEl.className = 'winner-text red';
       } else if (blueScore > redScore) {
         winner = 'blue';
-        winnerTextEl.textContent = 'BLUE WINS!';
-        winnerTextEl.className = 'winner-text blue';
       } else {
         winner = 'tie';
-        winnerTextEl.textContent = 'TIE GAME!';
-        winnerTextEl.className = 'winner-text tie';
       }
-
-      finalScoreEl.textContent = `${redScore} - ${blueScore}`;
-      gameOverEl.classList.add('show');
 
       // Send winner task to Portals
       sendTaskUpdate(`timer_${winner}_wins`, 'SetNotActiveToActive');
+      console.log('[Leaderboard] Timer ended - winner:', winner, 'Score:', redScore, '-', blueScore);
     }
 
     // ===========================================
@@ -366,16 +292,10 @@
     function endGameByScore(winner) {
       gameActive = false;
 
-      if (winner === 'red') {
-        winnerTextEl.textContent = 'RED WINS!';
-        winnerTextEl.className = 'winner-text red';
-      } else {
-        winnerTextEl.textContent = 'BLUE WINS!';
-        winnerTextEl.className = 'winner-text blue';
-      }
-
-      finalScoreEl.textContent = `${redScore} - ${blueScore}`;
-      gameOverEl.classList.add('show');
+      // Send task to Portals - it will show game-over.html iframe
+      // Note: score-based wins use the existing RedWins/BlueWins tasks
+      // which are triggered by CheckWinner in Portals, not from here
+      console.log('[Leaderboard] Score win - winner:', winner, 'Score:', redScore, '-', blueScore);
     }
 
     // ===========================================
