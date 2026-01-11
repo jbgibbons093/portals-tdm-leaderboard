@@ -255,8 +255,8 @@
         if (msg.startsWith('scores_')) {
           const parts = msg.split('_');
           if (parts.length >= 3) {
-            const redScore = parts[1];
-            const blueScore = parts[2];
+            const redScore = Math.min(50, parseInt(parts[1]) || 0);
+            const blueScore = Math.min(50, parseInt(parts[2]) || 0);
             displayGameOver(winner, redScore, blueScore);
           }
         }
