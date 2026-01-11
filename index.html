@@ -277,7 +277,15 @@
     }
 
     function updateTimerDisplay() {
-      timerEl.textContent = formatTime(timeRemaining);
+      const formatted = formatTime(timeRemaining);
+      console.log('[Timer] updateTimerDisplay called - timeRemaining:', timeRemaining, '- formatted:', formatted, '- timerEl:', timerEl);
+
+      if (!timerEl) {
+        console.error('[Timer] timerEl is null!');
+        return;
+      }
+
+      timerEl.textContent = formatted;
 
       // Warning states
       timerEl.classList.remove('warning', 'critical');
@@ -402,13 +410,14 @@
 
       let data = message;
 
-      // Parse if string
+      // Parse if string - but DON'T return on failure, it might be underscore format
       if (typeof message === 'string') {
         try {
           data = JSON.parse(message);
         } catch (e) {
+          // Not JSON - keep as string for underscore format parsing below
           console.log('[Leaderboard] Plain string message:', message);
-          return;
+          data = message;
         }
       }
 
