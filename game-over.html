@@ -9,6 +9,8 @@
   <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
 
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
+
     * {
       margin: 0;
       padding: 0;
@@ -18,7 +20,7 @@
     html, body {
       width: 100%;
       height: 100%;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Rajdhani', 'Segoe UI', sans-serif;
       background: transparent;
       overflow: hidden;
     }
@@ -32,94 +34,230 @@
       display: none;
       justify-content: center;
       align-items: center;
-      background: rgba(0, 0, 0, 0.5);
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.9) 100%);
     }
 
     .overlay.show {
       display: flex;
+      animation: overlayIn 0.3s ease-out;
+    }
+
+    @keyframes overlayIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Scanline effect */
+    .overlay::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.1) 0px,
+        rgba(0,0,0,0.1) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: 10;
     }
 
     .game-over-box {
-      background: linear-gradient(180deg, rgba(0,0,0,0.98) 0%, rgba(20,20,30,0.99) 100%);
-      padding: 80px 120px;
-      border-radius: 24px;
-      border: 3px solid rgba(255,255,255,0.2);
-      box-shadow: 0 16px 80px rgba(0,0,0,0.9);
+      position: relative;
+      background: linear-gradient(135deg, rgba(10,15,25,0.95) 0%, rgba(5,10,20,0.98) 100%);
+      padding: 60px 100px;
       text-align: center;
-      animation: slideIn 0.5s ease-out;
+      clip-path: polygon(
+        0 20px, 20px 0, calc(100% - 20px) 0, 100% 20px,
+        100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0 calc(100% - 20px)
+      );
+      border: none;
     }
 
-    @keyframes slideIn {
+    /* Glowing border effect */
+    .game-over-box::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(135deg, var(--team-color) 0%, transparent 50%, var(--team-color) 100%);
+      clip-path: polygon(
+        0 20px, 20px 0, calc(100% - 20px) 0, 100% 20px,
+        100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0 calc(100% - 20px)
+      );
+      z-index: -1;
+      opacity: 0.8;
+      animation: borderPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes borderPulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
+    /* Corner accents */
+    .corner {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--team-color);
+      opacity: 0.7;
+    }
+    .corner-tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+    .corner-tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+    .corner-bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+    .corner-br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+
+    /* Team color variables */
+    .game-over-box.red { --team-color: #ef4444; --team-glow: rgba(239,68,68,0.6); }
+    .game-over-box.blue { --team-color: #3b82f6; --team-glow: rgba(59,130,246,0.6); }
+    .game-over-box.tie { --team-color: #a855f7; --team-glow: rgba(168,85,247,0.6); }
+
+    /* Victory label */
+    .victory-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 8px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      animation: labelIn 0.5s ease-out 0.2s both;
+    }
+
+    @keyframes labelIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .winner-text {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 72px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 6px;
+      margin-bottom: 30px;
+      color: var(--team-color);
+      text-shadow:
+        0 0 20px var(--team-glow),
+        0 0 40px var(--team-glow),
+        0 0 60px var(--team-glow);
+      animation: titleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes titleIn {
       0% {
         opacity: 0;
-        transform: scale(0.8) translateY(-30px);
+        transform: scale(1.5) translateY(-20px);
+        filter: blur(10px);
       }
       100% {
         opacity: 1;
         transform: scale(1) translateY(0);
+        filter: blur(0);
       }
     }
 
-    .winner-text {
-      font-size: 84px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 8px;
-      margin-bottom: 30px;
+    /* Score display */
+    .score-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      margin-bottom: 35px;
+      animation: scoreIn 0.5s ease-out 0.3s both;
     }
 
-    .winner-text.red {
-      color: #ef4444;
-      text-shadow: 0 0 40px rgba(239,68,68,0.8), 0 0 80px rgba(239,68,68,0.4);
+    @keyframes scoreIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .winner-text.blue {
-      color: #3b82f6;
-      text-shadow: 0 0 40px rgba(59,130,246,0.8), 0 0 80px rgba(59,130,246,0.4);
+    .team-score {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 120px;
     }
 
-    .winner-text.tie {
-      color: #a855f7;
-      text-shadow: 0 0 40px rgba(168,85,247,0.8), 0 0 80px rgba(168,85,247,0.4);
-    }
-
-    .final-score {
-      font-size: 48px;
-      color: rgba(255,255,255,0.9);
-      margin-bottom: 40px;
+    .team-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px;
       font-weight: 700;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .team-label.red { color: rgba(239,68,68,0.8); }
+    .team-label.blue { color: rgba(59,130,246,0.8); }
+
+    .score-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 56px;
+      font-weight: 900;
       font-variant-numeric: tabular-nums;
     }
 
-    .score-red {
+    .score-value.red {
       color: #fca5a5;
+      text-shadow: 0 0 20px rgba(239,68,68,0.5);
     }
 
-    .score-blue {
+    .score-value.blue {
       color: #93c5fd;
+      text-shadow: 0 0 20px rgba(59,130,246,0.5);
     }
 
     .score-divider {
-      color: rgba(255,255,255,0.5);
-      margin: 0 20px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 40px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* Horizontal line accent */
+    .divider-line {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, var(--team-color) 50%, transparent 100%);
+      margin-bottom: 25px;
+      opacity: 0.5;
+      animation: lineIn 0.8s ease-out 0.4s both;
+    }
+
+    @keyframes lineIn {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
     }
 
     .refresh-prompt {
-      font-size: 24px;
-      color: rgba(255,255,255,0.6);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 18px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.5);
       text-transform: uppercase;
-      letter-spacing: 4px;
-      animation: pulse 2s ease-in-out infinite;
+      letter-spacing: 6px;
+      animation: promptPulse 2.5s ease-in-out infinite;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+    @keyframes promptPulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 0.9; }
     }
 
     /* Loading state */
     .loading {
       display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
     }
 
     .loaded {
@@ -134,30 +272,62 @@
       display: block;
     }
 
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: rgba(255,255,255,0.7);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     .loading-text {
-      font-size: 36px;
-      color: rgba(255,255,255,0.7);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
       letter-spacing: 4px;
+      text-transform: uppercase;
     }
   </style>
 </head>
 <body>
   <div class="overlay">
     <div class="game-over-box" id="gameOverBox">
+      <!-- Corner accents -->
+      <div class="corner corner-tl"></div>
+      <div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div>
+      <div class="corner corner-br"></div>
+
       <!-- Loading state -->
       <div class="loading">
-        <span class="loading-text">Loading...</span>
+        <div class="loading-spinner"></div>
+        <span class="loading-text">Calculating...</span>
       </div>
 
       <!-- Loaded state -->
       <div class="loaded">
-        <div class="winner-text" id="winnerText">RED WINS!</div>
-        <div class="final-score">
-          <span class="score-red" id="redScore">0</span>
-          <span class="score-divider">-</span>
-          <span class="score-blue" id="blueScore">0</span>
+        <div class="victory-label">Match Complete</div>
+        <div class="winner-text" id="winnerText">RED WINS</div>
+
+        <div class="score-container">
+          <div class="team-score">
+            <span class="team-label red">Red</span>
+            <span class="score-value red" id="redScore">0</span>
+          </div>
+          <span class="score-divider">:</span>
+          <div class="team-score">
+            <span class="team-label blue">Blue</span>
+            <span class="score-value blue" id="blueScore">0</span>
+          </div>
         </div>
-        <div class="refresh-prompt">Refresh to play again</div>
+
+        <div class="divider-line"></div>
+        <div class="refresh-prompt">Press R to restart</div>
       </div>
     </div>
   </div>
@@ -185,16 +355,17 @@
     }
 
     function displayGameOver(winner, redScore, blueScore) {
-      // Set winner text and color
+      // Set team color class on box for CSS variables
+      gameOverBox.classList.remove('red', 'blue', 'tie');
+      gameOverBox.classList.add(winner);
+
+      // Set winner text
       if (winner === 'red') {
-        winnerTextEl.textContent = 'RED WINS!';
-        winnerTextEl.className = 'winner-text red';
+        winnerTextEl.textContent = 'RED WINS';
       } else if (winner === 'blue') {
-        winnerTextEl.textContent = 'BLUE WINS!';
-        winnerTextEl.className = 'winner-text blue';
+        winnerTextEl.textContent = 'BLUE WINS';
       } else {
-        winnerTextEl.textContent = 'TIE GAME!';
-        winnerTextEl.className = 'winner-text tie';
+        winnerTextEl.textContent = 'DRAW';
       }
 
       // Set scores
