@@ -292,9 +292,8 @@
     function endGameByScore(winner) {
       gameActive = false;
 
-      // Send task to Portals - it will show game-over.html iframe
-      // Note: score-based wins use the existing RedWins/BlueWins tasks
-      // which are triggered by CheckWinner in Portals, not from here
+      // Send task to Portals - reuse timer win tasks since outcome is same
+      sendTaskUpdate(`timer_${winner}_wins`, 'SetNotActiveToActive');
       console.log('[Leaderboard] Score win - winner:', winner, 'Score:', redScore, '-', blueScore);
     }
 
