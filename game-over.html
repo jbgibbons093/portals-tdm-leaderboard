@@ -232,14 +232,6 @@
       console.log('[GameOver] Using fallback listener');
     }
 
-    // Notify Portals that game over screen is ready
-    if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
-      PortalsSdk.sendMessageToUnity(JSON.stringify({
-        TaskName: 'gameover_ready',
-        TaskTargetState: 'SetNotActiveToCompleted'
-      }));
-    }
-
     console.log('[GameOver] Initialized - waiting for game data');
   </script>
 </body>
