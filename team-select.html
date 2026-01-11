@@ -453,10 +453,10 @@
         <div class="subtitle" id="subtitleText">Choose your side</div>
       </div>
 
-      <!-- Loading State (shown until we get username) -->
+      <!-- Loading State (shown until we get slot assignment) -->
       <div class="loading-state" id="loadingState">
         <div class="loading-spinner"></div>
-        <div class="loading-text">Connecting...</div>
+        <div class="loading-text">Joining lobby...</div>
       </div>
 
       <!-- Main Content (hidden until ready) -->
@@ -505,6 +505,8 @@
     // ===========================================
     // Team Selection for Portals TDM
     // Polling-based slot sync system
+    // Uses "Player 1", "Player 2" etc. since Portals
+    // variables can only store numbers, not strings
     // ===========================================
 
     const MAX_SLOTS = 8;
@@ -512,17 +514,17 @@
     const SYNC_INTERVAL = 1500; // Poll every 1.5 seconds
 
     // State
-    let myUsername = null;
     let mySlot = 0; // 1-8, or 0 if not assigned
     let myTeam = 0; // 0=none, 1=red, 2=blue
     let myReady = false;
     let gameStarting = false;
     let syncTimer = null;
 
-    // Slot data from server: { 1: {name, team, ready}, 2: {...}, ... }
+    // Slot data from server: { 1: {claimed, team, ready}, 2: {...}, ... }
+    // claimed: 0=empty, 1=claimed (we show as "Player X")
     const slots = {};
     for (let i = 1; i <= MAX_SLOTS; i++) {
-      slots[i] = { name: '', team: 0, ready: 0 };
+      slots[i] = { claimed: 0, team: 0, ready: 0 };
     }
 
     // DOM Elements
@@ -555,8 +557,9 @@
     // ===========================================
 
     function parseSlotSync(msgStr) {
-      // Format: sync_Name1_Team1_Ready1_Name2_Team2_Ready2_...
-      // Empty names are sent as empty string (double underscore: __)
+      // Format: sync_C1_T1_R1_C2_T2_R2_...
+      // C=claimed (0/1), T=team (0/1/2), R=ready (0/1)
+      // 8 slots × 3 values = 24 values total
 
       if (!msgStr.startsWith('sync_')) return false;
 
@@ -564,26 +567,27 @@
       const parts = data.split('_');
 
       // We expect 24 parts (8 slots × 3 values each)
-      // But handle variable length gracefully
-
       for (let i = 0; i < MAX_SLOTS; i++) {
         const baseIndex = i * 3;
         if (baseIndex + 2 < parts.length) {
-          const name = parts[baseIndex] || '';
+          const claimed = parseInt(parts[baseIndex]) || 0;
           const team = parseInt(parts[baseIndex + 1]) || 0;
           const ready = parseInt(parts[baseIndex + 2]) || 0;
 
-          slots[i + 1] = { name, team, ready };
+          slots[i + 1] = { claimed, team, ready };
         }
       }
 
-      debug('Sync received: ' + Object.values(slots).filter(s => s.name).map(s => s.name).join(', '));
+      const activePlayers = Object.entries(slots)
+        .filter(([_, s]) => s.claimed === 1)
+        .map(([slot, _]) => 'P' + slot);
+      debug('Sync: ' + (activePlayers.length > 0 ? activePlayers.join(', ') : 'no players'));
       return true;
     }
 
     function getPlayersOnTeam(teamNum) {
       return Object.entries(slots)
-        .filter(([_, data]) => data.name && data.team === teamNum)
+        .filter(([_, data]) => data.claimed === 1 && data.team === teamNum)
         .map(([slot, data]) => ({ slot: parseInt(slot), ...data }));
     }
 
@@ -593,22 +597,17 @@
 
     function getAllPlayersWithTeam() {
       return Object.entries(slots)
-        .filter(([_, data]) => data.name && data.team > 0)
+        .filter(([_, data]) => data.claimed === 1 && data.team > 0)
         .map(([slot, data]) => ({ slot: parseInt(slot), ...data }));
     }
 
-    function findMySlotFromSync() {
-      // After sync, check if our username is in any slot
-      for (let i = 1; i <= MAX_SLOTS; i++) {
-        if (slots[i].name === myUsername) {
-          mySlot = i;
-          myTeam = slots[i].team;
-          myReady = slots[i].ready === 1;
-          debug('Found my slot: ' + mySlot + ' team: ' + myTeam + ' ready: ' + myReady);
-          return true;
-        }
+    function updateMyStateFromSync() {
+      // After sync, update my local state from my slot's data
+      if (mySlot > 0 && slots[mySlot]) {
+        myTeam = slots[mySlot].team;
+        myReady = slots[mySlot].ready === 1;
+        debug('My state: slot=' + mySlot + ' team=' + myTeam + ' ready=' + myReady);
       }
-      return false;
     }
 
     // ===========================================
@@ -616,7 +615,7 @@
     // ===========================================
 
     function render() {
-      if (!myUsername) return;
+      if (mySlot === 0) return; // Not yet assigned a slot
 
       const redPlayers = getPlayersOnTeam(1);
       const bluePlayers = getPlayersOnTeam(2);
@@ -644,24 +643,19 @@
     }
 
     function renderPlayer(player) {
-      const isMe = player.name === myUsername;
+      const isMe = player.slot === mySlot;
+      const playerName = 'Player ' + player.slot;
       const statusClass = player.ready === 1 ? 'ready' : 'not-ready';
       const statusLabel = player.ready === 1 ? 'Ready' : 'Waiting';
 
       return `
         <div class="player-item ${isMe ? 'is-me' : ''}">
           <div class="player-info">
-            <span class="player-name">${escapeHtml(player.name)}${isMe ? ' (You)' : ''}</span>
+            <span class="player-name">${playerName}${isMe ? ' (You)' : ''}</span>
           </div>
           <span class="player-status ${statusClass}">${statusLabel}</span>
         </div>
       `;
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
     }
 
     function updateJoinButtons(redCount, blueCount) {
@@ -873,36 +867,31 @@
       const msgStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
 
       // Message formats:
-      // player_Username          - Set current player identity
-      // my_slot_X               - Slot X has been assigned to me
-      // sync_N1_T1_R1_N2_T2_R2... - Full slot sync (8 slots × 3 values)
+      // my_slot_X               - Slot X assigned to this player (1-8)
+      // sync_C1_T1_R1_C2_T2_R2... - Full slot sync (C=claimed, T=team, R=ready)
       // slot_claimed            - Slot claim succeeded
-      // slot_failed             - Slot claim failed, try another
+      // slot_failed             - Slot claim failed (lobby full)
       // countdown_3             - Start countdown
       // start                   - Game starting
+      // reset                   - Reset lobby
 
-      if (msgStr.startsWith('player_')) {
-        myUsername = msgStr.substring(7);
-        debug('I am: ' + myUsername);
-
-        // Show main content, hide loading
-        loadingState.style.display = 'none';
-        mainContent.style.display = 'block';
-        subtitleText.textContent = 'Welcome, ' + myUsername;
-
-        // Request slot claim
-        sendTaskUpdate('claim_slot', 'SetNotActiveToActive');
-
-        // Start sync loop
-        startSyncLoop();
-      }
-      else if (msgStr.startsWith('my_slot_')) {
+      if (msgStr.startsWith('my_slot_')) {
         mySlot = parseInt(msgStr.substring(8)) || 0;
         debug('Assigned slot: ' + mySlot);
+
+        if (mySlot > 0) {
+          // Show main content, hide loading
+          loadingState.style.display = 'none';
+          mainContent.style.display = 'block';
+          subtitleText.textContent = 'You are Player ' + mySlot;
+
+          // Start sync loop to get lobby state
+          startSyncLoop();
+        }
       }
       else if (msgStr.startsWith('sync_')) {
         if (parseSlotSync(msgStr)) {
-          findMySlotFromSync();
+          updateMyStateFromSync();
           render();
         }
       }
@@ -911,6 +900,8 @@
       }
       else if (msgStr === 'slot_failed') {
         debug('Slot claim failed');
+        loadingState.style.display = 'none';
+        mainContent.style.display = 'block';
         statusText.textContent = 'Lobby full - try again later';
         statusText.className = 'status-text error';
       }
@@ -926,15 +917,15 @@
       else if (msgStr === 'reset') {
         // Full reset
         for (let i = 1; i <= MAX_SLOTS; i++) {
-          slots[i] = { name: '', team: 0, ready: 0 };
+          slots[i] = { claimed: 0, team: 0, ready: 0 };
         }
         mySlot = 0;
         myTeam = 0;
         myReady = false;
         gameStarting = false;
         countdownOverlay.classList.remove('show');
-        render();
-        startSyncLoop();
+        loadingState.style.display = 'block';
+        mainContent.style.display = 'none';
       }
     }
 
@@ -951,7 +942,8 @@
       console.log('[TeamSelect] Using fallback listener');
     }
 
-    // Notify Portals that team select is ready
+    // Notify Portals that team select is ready and request slot assignment
+    // Portals will respond with my_slot_X message after running claim_slot
     if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
       PortalsSdk.sendMessageToUnity(JSON.stringify({
         TaskName: 'team_select_ready',
@@ -959,7 +951,7 @@
       }));
     }
 
-    console.log('[TeamSelect] Initialized - waiting for player identity');
+    console.log('[TeamSelect] Initialized - waiting for slot assignment');
   </script>
 </body>
 </html>
