@@ -156,22 +156,23 @@
       100% { transform: scale(1); }
     }
 
-    /* Game over overlay */
+    /* Game over overlay - positioned below HUD bar */
     .game-over {
       position: fixed;
-      top: 50%;
+      top: 100px;
       left: 50%;
-      transform: translate(-50%, -50%);
-      background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(20,20,30,0.98) 100%);
+      transform: translateX(-50%);
+      background: linear-gradient(180deg, rgba(0,0,0,0.98) 0%, rgba(20,20,30,0.99) 100%);
       display: none;
       justify-content: center;
       align-items: center;
       flex-direction: column;
       z-index: 100;
-      padding: 40px 60px;
-      border-radius: 16px;
-      border: 2px solid rgba(255,255,255,0.1);
-      box-shadow: 0 8px 40px rgba(0,0,0,0.8);
+      padding: 60px 100px;
+      border-radius: 20px;
+      border: 3px solid rgba(255,255,255,0.2);
+      box-shadow: 0 12px 60px rgba(0,0,0,0.9);
+      min-width: 500px;
     }
 
     .game-over.show {
@@ -179,11 +180,11 @@
     }
 
     .winner-text {
-      font-size: 48px;
+      font-size: 72px;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 4px;
-      margin-bottom: 16px;
+      letter-spacing: 6px;
+      margin-bottom: 20px;
     }
 
     .winner-text.red {
@@ -202,16 +203,17 @@
     }
 
     .final-score {
-      font-size: 24px;
-      color: rgba(255,255,255,0.7);
-      margin-bottom: 24px;
+      font-size: 36px;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 30px;
+      font-weight: 600;
     }
 
     .refresh-prompt {
-      font-size: 16px;
-      color: rgba(255,255,255,0.5);
+      font-size: 20px;
+      color: rgba(255,255,255,0.6);
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
       animation: pulse 2s ease-in-out infinite;
     }
   </style>
