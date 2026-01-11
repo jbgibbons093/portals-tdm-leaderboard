@@ -193,6 +193,10 @@
     let blueScore = 0;
     let timeRemaining = GAME_DURATION;
     let gameActive = true;
+    let initialized = false;
+
+    // Prevent game end on initial load - wait 3 seconds
+    setTimeout(() => { initialized = true; }, 3000);
 
     // DOM elements
     const redScoreEl = document.getElementById('redScore');
@@ -234,7 +238,8 @@
       timeRemaining = Math.max(0, GAME_DURATION - elapsed);
       updateTimerDisplay();
 
-      if (timeRemaining <= 0 && gameActive) {
+      // Only allow game end after initialized (3 second delay) to prevent race conditions
+      if (timeRemaining <= 0 && gameActive && initialized) {
         endGameByTimer();
       }
     }
