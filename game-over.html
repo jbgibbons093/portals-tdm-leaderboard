@@ -68,51 +68,12 @@
 
     .game-over-box {
       position: relative;
-      background: linear-gradient(135deg, rgba(10,15,25,0.95) 0%, rgba(5,10,20,0.98) 100%);
-      padding: 60px 100px;
+      background: transparent;
+      padding: 80px 180px;
       text-align: center;
-      clip-path: polygon(
-        0 20px, 20px 0, calc(100% - 20px) 0, 100% 20px,
-        100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0 calc(100% - 20px)
-      );
       border: none;
     }
 
-    /* Glowing border effect */
-    .game-over-box::before {
-      content: '';
-      position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      background: linear-gradient(135deg, var(--team-color) 0%, transparent 50%, var(--team-color) 100%);
-      clip-path: polygon(
-        0 20px, 20px 0, calc(100% - 20px) 0, 100% 20px,
-        100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0 calc(100% - 20px)
-      );
-      z-index: -1;
-      opacity: 0.8;
-      animation: borderPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes borderPulse {
-      0%, 100% { opacity: 0.6; }
-      50% { opacity: 1; }
-    }
-
-    /* Corner accents */
-    .corner {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      border: 2px solid var(--team-color);
-      opacity: 0.7;
-    }
-    .corner-tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
-    .corner-tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
-    .corner-bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
-    .corner-br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
 
     /* Team color variables */
     .game-over-box.red { --team-color: #ef4444; --team-glow: rgba(239,68,68,0.6); }
@@ -122,12 +83,12 @@
     /* Victory label */
     .victory-label {
       font-family: 'Orbitron', sans-serif;
-      font-size: 14px;
+      font-size: 18px;
       font-weight: 700;
-      letter-spacing: 8px;
+      letter-spacing: 10px;
       color: rgba(255,255,255,0.4);
       text-transform: uppercase;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
       animation: labelIn 0.5s ease-out 0.2s both;
     }
 
@@ -138,16 +99,16 @@
 
     .winner-text {
       font-family: 'Orbitron', sans-serif;
-      font-size: 72px;
+      font-size: 96px;
       font-weight: 900;
       text-transform: uppercase;
-      letter-spacing: 6px;
-      margin-bottom: 30px;
+      letter-spacing: 8px;
+      margin-bottom: 40px;
       color: var(--team-color);
       text-shadow:
-        0 0 20px var(--team-glow),
-        0 0 40px var(--team-glow),
-        0 0 60px var(--team-glow);
+        0 0 30px var(--team-glow),
+        0 0 60px var(--team-glow),
+        0 0 90px var(--team-glow);
       animation: titleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
@@ -169,8 +130,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 30px;
-      margin-bottom: 35px;
+      gap: 50px;
+      margin-bottom: 45px;
       animation: scoreIn 0.5s ease-out 0.3s both;
     }
 
@@ -188,11 +149,11 @@
 
     .team-label {
       font-family: 'Orbitron', sans-serif;
-      font-size: 12px;
+      font-size: 16px;
       font-weight: 700;
-      letter-spacing: 4px;
+      letter-spacing: 5px;
       text-transform: uppercase;
-      margin-bottom: 5px;
+      margin-bottom: 8px;
     }
 
     .team-label.red { color: rgba(239,68,68,0.8); }
@@ -200,7 +161,7 @@
 
     .score-value {
       font-family: 'Orbitron', sans-serif;
-      font-size: 56px;
+      font-size: 72px;
       font-weight: 900;
       font-variant-numeric: tabular-nums;
     }
@@ -217,7 +178,7 @@
 
     .score-divider {
       font-family: 'Orbitron', sans-serif;
-      font-size: 40px;
+      font-size: 56px;
       font-weight: 400;
       color: rgba(255,255,255,0.3);
     }
@@ -239,11 +200,11 @@
 
     .refresh-prompt {
       font-family: 'Rajdhani', sans-serif;
-      font-size: 18px;
+      font-size: 22px;
       font-weight: 500;
       color: rgba(255,255,255,0.5);
       text-transform: uppercase;
-      letter-spacing: 6px;
+      letter-spacing: 8px;
       animation: promptPulse 2.5s ease-in-out infinite;
     }
 
@@ -297,12 +258,6 @@
 <body>
   <div class="overlay">
     <div class="game-over-box" id="gameOverBox">
-      <!-- Corner accents -->
-      <div class="corner corner-tl"></div>
-      <div class="corner corner-tr"></div>
-      <div class="corner corner-bl"></div>
-      <div class="corner corner-br"></div>
-
       <!-- Loading state -->
       <div class="loading">
         <div class="loading-spinner"></div>
@@ -327,7 +282,7 @@
         </div>
 
         <div class="divider-line"></div>
-        <div class="refresh-prompt">Press R to restart</div>
+        <div class="refresh-prompt">Refresh to play again</div>
       </div>
     </div>
   </div>
