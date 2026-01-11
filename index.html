@@ -234,9 +234,7 @@
       timeRemaining = Math.max(0, GAME_DURATION - elapsed);
       updateTimerDisplay();
 
-      // Only end game if timer naturally ran out (not on initial load with stale data)
-      // Require at least 10 seconds of game time before allowing game end
-      if (timeRemaining <= 0 && gameActive && elapsed >= 10) {
+      if (timeRemaining <= 0 && gameActive) {
         endGameByTimer();
       }
     }
