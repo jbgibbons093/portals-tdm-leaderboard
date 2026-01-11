@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kill Leaderboard</title>
+
+  <!-- Portals SDK -->
+  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    /* Toggle Button - Tab on right side */
+    .toggle-btn {
+      position: fixed;
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%);
+      background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(20,20,30,0.95) 100%);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-right: none;
+      border-radius: 8px 0 0 8px;
+      padding: 16px 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 50;
+    }
+
+    .toggle-btn:hover {
+      background: linear-gradient(180deg, rgba(20,20,40,0.95) 0%, rgba(40,40,60,0.98) 100%);
+      padding-right: 18px;
+    }
+
+    .toggle-btn.hidden {
+      transform: translateY(-50%) translateX(100%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .toggle-icon {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .toggle-icon span {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: rgba(255,255,255,0.7);
+      border-radius: 1px;
+    }
+
+    .toggle-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 8px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+
+    /* Leaderboard Overlay */
+    .leaderboard-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.85) 100%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 100;
+    }
+
+    .leaderboard-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Scanline effect */
+    .leaderboard-overlay::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.1) 0px,
+        rgba(0,0,0,0.1) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .leaderboard-container {
+      position: relative;
+      background: linear-gradient(180deg, rgba(10,10,20,0.95) 0%, rgba(20,20,35,0.98) 100%);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 30px 40px;
+      min-width: 600px;
+      max-width: 800px;
+      max-height: 80vh;
+      box-shadow:
+        0 0 40px rgba(0,0,0,0.8),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+      transform: scale(0.95) translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .leaderboard-overlay.show .leaderboard-container {
+      transform: scale(1) translateY(0);
+    }
+
+    /* Close button */
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 32px;
+      height: 32px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .close-btn:hover {
+      background: rgba(239,68,68,0.3);
+      border-color: rgba(239,68,68,0.5);
+    }
+
+    .close-btn::before,
+    .close-btn::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 2px;
+      background: rgba(255,255,255,0.7);
+    }
+
+    .close-btn::before { transform: rotate(45deg); }
+    .close-btn::after { transform: rotate(-45deg); }
+
+    /* Header */
+    .leaderboard-header {
+      text-align: center;
+      margin-bottom: 25px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .leaderboard-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 6px;
+      text-shadow: 0 0 20px rgba(255,255,255,0.3);
+    }
+
+    .leaderboard-subtitle {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-top: 8px;
+    }
+
+    /* Table */
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table-header {
+      display: grid;
+      grid-template-columns: 50px 1fr 80px 80px 80px;
+      gap: 10px;
+      padding: 12px 15px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    .table-header span {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .table-header span:not(:first-child):not(:nth-child(2)) {
+      text-align: center;
+    }
+
+    .player-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .player-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .player-list::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.05);
+      border-radius: 3px;
+    }
+
+    .player-list::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 3px;
+    }
+
+    .player-row {
+      display: grid;
+      grid-template-columns: 50px 1fr 80px 80px 80px;
+      gap: 10px;
+      padding: 14px 15px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 6px;
+      margin-bottom: 4px;
+      transition: background 0.2s ease;
+    }
+
+    .player-row:hover {
+      background: rgba(255,255,255,0.06);
+    }
+
+    .player-row.current-player {
+      background: rgba(168,85,247,0.15);
+      border: 1px solid rgba(168,85,247,0.3);
+    }
+
+    .player-row.red-team {
+      border-left: 3px solid rgba(239,68,68,0.6);
+    }
+
+    .player-row.blue-team {
+      border-left: 3px solid rgba(59,130,246,0.6);
+    }
+
+    .player-rank {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .player-rank.top-1 { color: #fbbf24; text-shadow: 0 0 10px rgba(251,191,36,0.5); }
+    .player-rank.top-2 { color: #94a3b8; text-shadow: 0 0 10px rgba(148,163,184,0.5); }
+    .player-rank.top-3 { color: #cd7f32; text-shadow: 0 0 10px rgba(205,127,50,0.5); }
+
+    .player-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: #ffffff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .player-stat {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .stat-kills {
+      color: #4ade80;
+      text-shadow: 0 0 10px rgba(74,222,128,0.4);
+    }
+
+    .stat-deaths {
+      color: #f87171;
+      text-shadow: 0 0 10px rgba(248,113,113,0.4);
+    }
+
+    .stat-kdr {
+      color: #60a5fa;
+      text-shadow: 0 0 10px rgba(96,165,250,0.4);
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 18px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    /* Keyboard hint */
+    .keyboard-hint {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .keyboard-hint kbd {
+      display: inline-block;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin: 0 4px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Toggle Button -->
+  <div class="toggle-btn" id="toggleBtn">
+    <div class="toggle-icon">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <span class="toggle-label">Stats</span>
+  </div>
+
+  <!-- Leaderboard Overlay -->
+  <div class="leaderboard-overlay" id="leaderboardOverlay">
+    <div class="leaderboard-container">
+      <div class="close-btn" id="closeBtn"></div>
+
+      <div class="leaderboard-header">
+        <div class="leaderboard-title">Scoreboard</div>
+        <div class="leaderboard-subtitle">Kill / Death Ratio</div>
+      </div>
+
+      <div class="table-header">
+        <span>#</span>
+        <span>Player</span>
+        <span>Kills</span>
+        <span>Deaths</span>
+        <span>K/D</span>
+      </div>
+
+      <div class="player-list" id="playerList">
+        <div class="empty-state">
+          <div class="empty-state-icon">&#9876;</div>
+          <div class="empty-state-text">Waiting for players...</div>
+        </div>
+      </div>
+
+      <div class="keyboard-hint">
+        Press <kbd>TAB</kbd> to close
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===========================================
+    // Kill Leaderboard for Portals TDM
+    // Tracks individual player kills/deaths/KDR
+    // ===========================================
+
+    // Player data storage
+    // { username: { kills: 0, deaths: 0, team: 'red'|'blue' } }
+    const players = {};
+    let currentUsername = null;
+    let isOverlayOpen = false;
+
+    // DOM elements
+    const toggleBtn = document.getElementById('toggleBtn');
+    const leaderboardOverlay = document.getElementById('leaderboardOverlay');
+    const closeBtn = document.getElementById('closeBtn');
+    const playerList = document.getElementById('playerList');
+
+    // ===========================================
+    // UI Functions
+    // ===========================================
+
+    function openLeaderboard() {
+      isOverlayOpen = true;
+      leaderboardOverlay.classList.add('show');
+      toggleBtn.classList.add('hidden');
+      renderLeaderboard();
+    }
+
+    function closeLeaderboard() {
+      isOverlayOpen = false;
+      leaderboardOverlay.classList.remove('show');
+      toggleBtn.classList.remove('hidden');
+    }
+
+    function toggleLeaderboard() {
+      if (isOverlayOpen) {
+        closeLeaderboard();
+      } else {
+        openLeaderboard();
+      }
+    }
+
+    // Event listeners
+    toggleBtn.addEventListener('click', openLeaderboard);
+    closeBtn.addEventListener('click', closeLeaderboard);
+
+    // Keyboard shortcut (TAB)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        toggleLeaderboard();
+      }
+      if (e.key === 'Escape' && isOverlayOpen) {
+        closeLeaderboard();
+      }
+    });
+
+    // Click outside to close
+    leaderboardOverlay.addEventListener('click', (e) => {
+      if (e.target === leaderboardOverlay) {
+        closeLeaderboard();
+      }
+    });
+
+    // ===========================================
+    // Player Data Functions
+    // ===========================================
+
+    function ensurePlayer(username, team = null) {
+      if (!players[username]) {
+        players[username] = {
+          kills: 0,
+          deaths: 0,
+          team: team || 'unknown'
+        };
+      } else if (team && players[username].team === 'unknown') {
+        players[username].team = team;
+      }
+      return players[username];
+    }
+
+    function addKill(username, team = null) {
+      const player = ensurePlayer(username, team);
+      player.kills++;
+      console.log('[Leaderboard] Kill:', username, '- Total:', player.kills);
+      if (isOverlayOpen) renderLeaderboard();
+    }
+
+    function addDeath(username, team = null) {
+      const player = ensurePlayer(username, team);
+      player.deaths++;
+      console.log('[Leaderboard] Death:', username, '- Total:', player.deaths);
+      if (isOverlayOpen) renderLeaderboard();
+    }
+
+    function setCurrentPlayer(username, team = null) {
+      currentUsername = username;
+      ensurePlayer(username, team);
+      console.log('[Leaderboard] Current player:', username);
+    }
+
+    function calculateKDR(kills, deaths) {
+      if (deaths === 0) return kills > 0 ? kills.toFixed(2) : '0.00';
+      return (kills / deaths).toFixed(2);
+    }
+
+    // ===========================================
+    // Render Functions
+    // ===========================================
+
+    function renderLeaderboard() {
+      const playerArray = Object.entries(players).map(([username, data]) => ({
+        username,
+        kills: data.kills,
+        deaths: data.deaths,
+        team: data.team,
+        kdr: parseFloat(calculateKDR(data.kills, data.deaths))
+      }));
+
+      // Sort by kills (descending), then by KDR
+      playerArray.sort((a, b) => {
+        if (b.kills !== a.kills) return b.kills - a.kills;
+        return b.kdr - a.kdr;
+      });
+
+      if (playerArray.length === 0) {
+        playerList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">&#9876;</div>
+            <div class="empty-state-text">Waiting for players...</div>
+          </div>
+        `;
+        return;
+      }
+
+      playerList.innerHTML = playerArray.map((player, index) => {
+        const rank = index + 1;
+        const rankClass = rank <= 3 ? `top-${rank}` : '';
+        const isCurrentPlayer = player.username === currentUsername;
+        const teamClass = player.team === 'red' ? 'red-team' :
+                         player.team === 'blue' ? 'blue-team' : '';
+
+        return `
+          <div class="player-row ${teamClass} ${isCurrentPlayer ? 'current-player' : ''}">
+            <span class="player-rank ${rankClass}">${rank}</span>
+            <span class="player-name">${escapeHtml(player.username)}</span>
+            <span class="player-stat stat-kills">${player.kills}</span>
+            <span class="player-stat stat-deaths">${player.deaths}</span>
+            <span class="player-stat stat-kdr">${player.kdr.toFixed(2)}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ===========================================
+    // Portals SDK Integration
+    // ===========================================
+
+    function handleMessage(message) {
+      console.log('[Leaderboard] Received:', message);
+
+      let msg = message;
+      if (typeof message === 'string') {
+        try {
+          msg = JSON.parse(message);
+        } catch (e) {
+          msg = message;
+        }
+      }
+
+      const msgStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
+
+      // Message formats:
+      // kill_username           - Player got a kill
+      // kill_username_team      - Player got a kill (with team)
+      // death_username          - Player died
+      // death_username_team     - Player died (with team)
+      // join_username_team      - Player joined (set current player)
+      // player_username_team    - Identify current player
+      // sync_username_kills_deaths_team - Full sync for a player
+
+      if (msgStr.startsWith('kill_')) {
+        const parts = msgStr.split('_');
+        const username = parts[1];
+        const team = parts[2] || null;
+        if (username) addKill(username, team);
+      }
+      else if (msgStr.startsWith('death_')) {
+        const parts = msgStr.split('_');
+        const username = parts[1];
+        const team = parts[2] || null;
+        if (username) addDeath(username, team);
+      }
+      else if (msgStr.startsWith('join_') || msgStr.startsWith('player_')) {
+        const parts = msgStr.split('_');
+        const username = parts[1];
+        const team = parts[2] || null;
+        if (username) setCurrentPlayer(username, team);
+      }
+      else if (msgStr.startsWith('sync_')) {
+        // sync_username_kills_deaths_team
+        const parts = msgStr.split('_');
+        if (parts.length >= 4) {
+          const username = parts[1];
+          const kills = parseInt(parts[2]) || 0;
+          const deaths = parseInt(parts[3]) || 0;
+          const team = parts[4] || null;
+
+          const player = ensurePlayer(username, team);
+          player.kills = kills;
+          player.deaths = deaths;
+          console.log('[Leaderboard] Sync:', username, kills, '/', deaths);
+          if (isOverlayOpen) renderLeaderboard();
+        }
+      }
+      else if (msgStr === 'open') {
+        openLeaderboard();
+      }
+      else if (msgStr === 'close') {
+        closeLeaderboard();
+      }
+      else if (msgStr === 'toggle') {
+        toggleLeaderboard();
+      }
+      else if (msgStr === 'reset') {
+        // Clear all player data
+        Object.keys(players).forEach(key => delete players[key]);
+        currentUsername = null;
+        if (isOverlayOpen) renderLeaderboard();
+        console.log('[Leaderboard] Reset');
+      }
+    }
+
+    // Set up message listener
+    if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
+      PortalsSdk.setMessageListener(handleMessage);
+      console.log('[Leaderboard] SDK listener registered');
+    } else {
+      window.addEventListener('message', (e) => handleMessage(e.data));
+      console.log('[Leaderboard] Using fallback listener');
+    }
+
+    // Notify Portals that leaderboard is ready
+    if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
+      PortalsSdk.sendMessageToUnity(JSON.stringify({
+        TaskName: 'kill_leaderboard_ready',
+        TaskTargetState: 'SetNotActiveToCompleted'
+      }));
+    }
+
+    console.log('[Leaderboard] Initialized');
+  </script>
+</body>
+</html>

@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Select</title>
+
+  <!-- Portals SDK -->
+  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.95) 100%);
+    }
+
+    /* Scanline effect */
+    .overlay::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.1) 0px,
+        rgba(0,0,0,0.1) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .team-select-container {
+      position: relative;
+      background: linear-gradient(180deg, rgba(10,10,20,0.95) 0%, rgba(20,20,35,0.98) 100%);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 30px 40px;
+      min-width: 700px;
+      max-width: 900px;
+      box-shadow:
+        0 0 60px rgba(0,0,0,0.8),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 8px;
+      text-shadow: 0 0 20px rgba(255,255,255,0.3);
+    }
+
+    .subtitle {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      margin-top: 8px;
+    }
+
+    /* Teams Container */
+    .teams-wrapper {
+      display: flex;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    .team-column {
+      flex: 1;
+      background: rgba(0,0,0,0.3);
+      border-radius: 10px;
+      padding: 20px;
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .team-column.red {
+      border: 2px solid rgba(239,68,68,0.4);
+      box-shadow: inset 0 0 30px rgba(239,68,68,0.1);
+    }
+
+    .team-column.blue {
+      border: 2px solid rgba(59,130,246,0.4);
+      box-shadow: inset 0 0 30px rgba(59,130,246,0.1);
+    }
+
+    .team-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .team-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+    }
+
+    .team-name.red { color: #ef4444; text-shadow: 0 0 15px rgba(239,68,68,0.5); }
+    .team-name.blue { color: #3b82f6; text-shadow: 0 0 15px rgba(59,130,246,0.5); }
+
+    .team-count {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .player-list {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 15px;
+    }
+
+    .player-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .player-list::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.05);
+    }
+
+    .player-list::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+    }
+
+    .player-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .player-item.is-me {
+      background: rgba(168,85,247,0.2);
+      border: 1px solid rgba(168,85,247,0.4);
+    }
+
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .player-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .player-status {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .player-status.ready {
+      background: rgba(74,222,128,0.2);
+      color: #4ade80;
+      border: 1px solid rgba(74,222,128,0.4);
+    }
+
+    .player-status.not-ready {
+      background: rgba(251,191,36,0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(251,191,36,0.4);
+    }
+
+    .join-btn {
+      width: 100%;
+      padding: 12px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .join-btn.red {
+      background: linear-gradient(180deg, rgba(239,68,68,0.3) 0%, rgba(185,28,28,0.4) 100%);
+      color: #fca5a5;
+      border: 1px solid rgba(239,68,68,0.5);
+    }
+
+    .join-btn.red:hover:not(:disabled) {
+      background: linear-gradient(180deg, rgba(239,68,68,0.5) 0%, rgba(185,28,28,0.6) 100%);
+      box-shadow: 0 0 20px rgba(239,68,68,0.4);
+    }
+
+    .join-btn.blue {
+      background: linear-gradient(180deg, rgba(59,130,246,0.3) 0%, rgba(29,78,216,0.4) 100%);
+      color: #93c5fd;
+      border: 1px solid rgba(59,130,246,0.5);
+    }
+
+    .join-btn.blue:hover:not(:disabled) {
+      background: linear-gradient(180deg, rgba(59,130,246,0.5) 0%, rgba(29,78,216,0.6) 100%);
+      box-shadow: 0 0 20px rgba(59,130,246,0.4);
+    }
+
+    .join-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .join-btn.joined {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.5);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    /* Bottom Actions */
+    .actions {
+      display: flex;
+      gap: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .ready-btn {
+      flex: 1;
+      padding: 16px 30px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .ready-btn.not-ready {
+      background: linear-gradient(180deg, rgba(74,222,128,0.3) 0%, rgba(34,197,94,0.4) 100%);
+      color: #4ade80;
+      border: 2px solid rgba(74,222,128,0.5);
+    }
+
+    .ready-btn.not-ready:hover:not(:disabled) {
+      background: linear-gradient(180deg, rgba(74,222,128,0.5) 0%, rgba(34,197,94,0.6) 100%);
+      box-shadow: 0 0 25px rgba(74,222,128,0.4);
+    }
+
+    .ready-btn.is-ready {
+      background: linear-gradient(180deg, rgba(239,68,68,0.3) 0%, rgba(185,28,28,0.4) 100%);
+      color: #fca5a5;
+      border: 2px solid rgba(239,68,68,0.5);
+    }
+
+    .ready-btn.is-ready:hover:not(:disabled) {
+      background: linear-gradient(180deg, rgba(239,68,68,0.5) 0%, rgba(185,28,28,0.6) 100%);
+    }
+
+    .ready-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .ready-btn.locked {
+      background: rgba(74,222,128,0.2);
+      color: #4ade80;
+      border-color: rgba(74,222,128,0.4);
+      cursor: default;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .status-text {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+
+    .status-text.all-ready {
+      color: #4ade80;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .status-text.error {
+      color: #ef4444;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; }
+    }
+
+    /* Countdown overlay */
+    .countdown-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      border-radius: 12px;
+      z-index: 20;
+    }
+
+    .countdown-overlay.show {
+      display: flex;
+    }
+
+    .countdown-number {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 120px;
+      font-weight: 900;
+      color: #ffffff;
+      text-shadow: 0 0 60px rgba(255,255,255,0.5);
+      animation: countPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes countPulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Empty state */
+    .empty-team {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.3);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    /* Loading state */
+    .loading-state {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: rgba(255,255,255,0.7);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+
+    /* Debug panel */
+    #debug {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.9);
+      color: lime;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-family: monospace;
+      z-index: 999;
+      max-width: 400px;
+      border-radius: 4px;
+      display: none; /* Set to 'block' for debugging */
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    <div class="team-select-container">
+      <!-- Countdown Overlay -->
+      <div class="countdown-overlay" id="countdownOverlay">
+        <div class="countdown-number" id="countdownNumber">3</div>
+      </div>
+
+      <div class="header">
+        <div class="title">Select Team</div>
+        <div class="subtitle" id="subtitleText">Choose your side</div>
+      </div>
+
+      <!-- Loading State (shown until we get username) -->
+      <div class="loading-state" id="loadingState">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Connecting...</div>
+      </div>
+
+      <!-- Main Content (hidden until ready) -->
+      <div id="mainContent" style="display: none;">
+        <div class="teams-wrapper">
+          <!-- Red Team -->
+          <div class="team-column red">
+            <div class="team-header">
+              <span class="team-name red">Red Team</span>
+              <span class="team-count" id="redCount">0/4</span>
+            </div>
+            <div class="player-list" id="redPlayerList">
+              <div class="empty-team">No players</div>
+            </div>
+            <button class="join-btn red" id="joinRedBtn">Join Red</button>
+          </div>
+
+          <!-- Blue Team -->
+          <div class="team-column blue">
+            <div class="team-header">
+              <span class="team-name blue">Blue Team</span>
+              <span class="team-count" id="blueCount">0/4</span>
+            </div>
+            <div class="player-list" id="bluePlayerList">
+              <div class="empty-team">No players</div>
+            </div>
+            <button class="join-btn blue" id="joinBlueBtn">Join Blue</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="ready-btn not-ready" id="readyBtn" disabled>Select a Team</button>
+        </div>
+
+        <div class="status-bar">
+          <div class="status-text" id="statusText">Waiting for players...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Debug Panel -->
+  <div id="debug">Debug info</div>
+
+  <script>
+    // ===========================================
+    // Team Selection for Portals TDM
+    // Polling-based slot sync system
+    // ===========================================
+
+    const MAX_SLOTS = 8;
+    const MAX_PER_TEAM = 4;
+    const SYNC_INTERVAL = 1500; // Poll every 1.5 seconds
+
+    // State
+    let myUsername = null;
+    let mySlot = 0; // 1-8, or 0 if not assigned
+    let myTeam = 0; // 0=none, 1=red, 2=blue
+    let myReady = false;
+    let gameStarting = false;
+    let syncTimer = null;
+
+    // Slot data from server: { 1: {name, team, ready}, 2: {...}, ... }
+    const slots = {};
+    for (let i = 1; i <= MAX_SLOTS; i++) {
+      slots[i] = { name: '', team: 0, ready: 0 };
+    }
+
+    // DOM Elements
+    const loadingState = document.getElementById('loadingState');
+    const mainContent = document.getElementById('mainContent');
+    const redPlayerList = document.getElementById('redPlayerList');
+    const bluePlayerList = document.getElementById('bluePlayerList');
+    const redCount = document.getElementById('redCount');
+    const blueCount = document.getElementById('blueCount');
+    const joinRedBtn = document.getElementById('joinRedBtn');
+    const joinBlueBtn = document.getElementById('joinBlueBtn');
+    const readyBtn = document.getElementById('readyBtn');
+    const statusText = document.getElementById('statusText');
+    const subtitleText = document.getElementById('subtitleText');
+    const countdownOverlay = document.getElementById('countdownOverlay');
+    const countdownNumber = document.getElementById('countdownNumber');
+    const debugEl = document.getElementById('debug');
+
+    // ===========================================
+    // Debug Logging
+    // ===========================================
+
+    function debug(msg) {
+      console.log('[TeamSelect]', msg);
+      debugEl.textContent = msg;
+    }
+
+    // ===========================================
+    // Slot Management
+    // ===========================================
+
+    function parseSlotSync(msgStr) {
+      // Format: sync_Name1_Team1_Ready1_Name2_Team2_Ready2_...
+      // Empty names are sent as empty string (double underscore: __)
+
+      if (!msgStr.startsWith('sync_')) return false;
+
+      const data = msgStr.substring(5); // Remove 'sync_'
+      const parts = data.split('_');
+
+      // We expect 24 parts (8 slots × 3 values each)
+      // But handle variable length gracefully
+
+      for (let i = 0; i < MAX_SLOTS; i++) {
+        const baseIndex = i * 3;
+        if (baseIndex + 2 < parts.length) {
+          const name = parts[baseIndex] || '';
+          const team = parseInt(parts[baseIndex + 1]) || 0;
+          const ready = parseInt(parts[baseIndex + 2]) || 0;
+
+          slots[i + 1] = { name, team, ready };
+        }
+      }
+
+      debug('Sync received: ' + Object.values(slots).filter(s => s.name).map(s => s.name).join(', '));
+      return true;
+    }
+
+    function getPlayersOnTeam(teamNum) {
+      return Object.entries(slots)
+        .filter(([_, data]) => data.name && data.team === teamNum)
+        .map(([slot, data]) => ({ slot: parseInt(slot), ...data }));
+    }
+
+    function getReadyCount(teamNum) {
+      return getPlayersOnTeam(teamNum).filter(p => p.ready === 1).length;
+    }
+
+    function getAllPlayersWithTeam() {
+      return Object.entries(slots)
+        .filter(([_, data]) => data.name && data.team > 0)
+        .map(([slot, data]) => ({ slot: parseInt(slot), ...data }));
+    }
+
+    function findMySlotFromSync() {
+      // After sync, check if our username is in any slot
+      for (let i = 1; i <= MAX_SLOTS; i++) {
+        if (slots[i].name === myUsername) {
+          mySlot = i;
+          myTeam = slots[i].team;
+          myReady = slots[i].ready === 1;
+          debug('Found my slot: ' + mySlot + ' team: ' + myTeam + ' ready: ' + myReady);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // ===========================================
+    // Rendering
+    // ===========================================
+
+    function render() {
+      if (!myUsername) return;
+
+      const redPlayers = getPlayersOnTeam(1);
+      const bluePlayers = getPlayersOnTeam(2);
+
+      // Render red team
+      if (redPlayers.length === 0) {
+        redPlayerList.innerHTML = '<div class="empty-team">No players</div>';
+      } else {
+        redPlayerList.innerHTML = redPlayers.map(p => renderPlayer(p)).join('');
+      }
+      redCount.textContent = `${redPlayers.length}/${MAX_PER_TEAM}`;
+
+      // Render blue team
+      if (bluePlayers.length === 0) {
+        bluePlayerList.innerHTML = '<div class="empty-team">No players</div>';
+      } else {
+        bluePlayerList.innerHTML = bluePlayers.map(p => renderPlayer(p)).join('');
+      }
+      blueCount.textContent = `${bluePlayers.length}/${MAX_PER_TEAM}`;
+
+      // Update buttons
+      updateJoinButtons(redPlayers.length, bluePlayers.length);
+      updateReadyButton();
+      updateStatus();
+    }
+
+    function renderPlayer(player) {
+      const isMe = player.name === myUsername;
+      const statusClass = player.ready === 1 ? 'ready' : 'not-ready';
+      const statusLabel = player.ready === 1 ? 'Ready' : 'Waiting';
+
+      return `
+        <div class="player-item ${isMe ? 'is-me' : ''}">
+          <div class="player-info">
+            <span class="player-name">${escapeHtml(player.name)}${isMe ? ' (You)' : ''}</span>
+          </div>
+          <span class="player-status ${statusClass}">${statusLabel}</span>
+        </div>
+      `;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function updateJoinButtons(redCount, blueCount) {
+      // Disable if already ready (locked in)
+      if (myReady) {
+        joinRedBtn.disabled = true;
+        joinBlueBtn.disabled = true;
+        joinRedBtn.classList.add('joined');
+        joinBlueBtn.classList.add('joined');
+        joinRedBtn.textContent = myTeam === 1 ? 'Joined' : 'Join Red';
+        joinBlueBtn.textContent = myTeam === 2 ? 'Joined' : 'Join Blue';
+        return;
+      }
+
+      // Reset classes
+      joinRedBtn.classList.remove('joined');
+      joinBlueBtn.classList.remove('joined');
+
+      // Red button
+      if (myTeam === 1) {
+        joinRedBtn.textContent = 'Joined';
+        joinRedBtn.classList.add('joined');
+        joinRedBtn.disabled = true;
+      } else if (redCount >= MAX_PER_TEAM) {
+        joinRedBtn.textContent = 'Full';
+        joinRedBtn.disabled = true;
+      } else {
+        joinRedBtn.textContent = 'Join Red';
+        joinRedBtn.disabled = false;
+      }
+
+      // Blue button
+      if (myTeam === 2) {
+        joinBlueBtn.textContent = 'Joined';
+        joinBlueBtn.classList.add('joined');
+        joinBlueBtn.disabled = true;
+      } else if (blueCount >= MAX_PER_TEAM) {
+        joinBlueBtn.textContent = 'Full';
+        joinBlueBtn.disabled = true;
+      } else {
+        joinBlueBtn.textContent = 'Join Blue';
+        joinBlueBtn.disabled = false;
+      }
+    }
+
+    function updateReadyButton() {
+      if (myTeam === 0) {
+        readyBtn.disabled = true;
+        readyBtn.textContent = 'Select a Team';
+        readyBtn.className = 'ready-btn not-ready';
+        return;
+      }
+
+      if (gameStarting) {
+        readyBtn.disabled = true;
+        readyBtn.textContent = 'Starting...';
+        readyBtn.className = 'ready-btn locked';
+        return;
+      }
+
+      readyBtn.disabled = false;
+      if (myReady) {
+        readyBtn.textContent = 'Cancel Ready';
+        readyBtn.className = 'ready-btn is-ready';
+      } else {
+        readyBtn.textContent = 'Ready Up';
+        readyBtn.className = 'ready-btn not-ready';
+      }
+    }
+
+    function updateStatus() {
+      const allWithTeam = getAllPlayersWithTeam();
+      const allReady = allWithTeam.filter(p => p.ready === 1);
+      const redPlayers = getPlayersOnTeam(1);
+      const bluePlayers = getPlayersOnTeam(2);
+
+      if (allWithTeam.length === 0) {
+        statusText.textContent = 'Waiting for players...';
+        statusText.className = 'status-text';
+      } else if (redPlayers.length === 0 || bluePlayers.length === 0) {
+        statusText.textContent = 'Need players on both teams';
+        statusText.className = 'status-text';
+      } else if (allReady.length === allWithTeam.length && allWithTeam.length >= 2) {
+        statusText.textContent = 'All players ready!';
+        statusText.className = 'status-text all-ready';
+        // Notify Portals that all are ready
+        sendTaskUpdate('all_players_ready', 'SetNotActiveToActive');
+      } else {
+        statusText.textContent = `${allReady.length}/${allWithTeam.length} players ready`;
+        statusText.className = 'status-text';
+      }
+    }
+
+    // ===========================================
+    // Button Actions
+    // ===========================================
+
+    joinRedBtn.addEventListener('click', () => {
+      if (myReady || myTeam === 1) return;
+      debug('Joining Red team');
+      myTeam = 1; // Optimistic update
+      sendTaskUpdate('join_red', 'SetNotActiveToActive');
+      render();
+    });
+
+    joinBlueBtn.addEventListener('click', () => {
+      if (myReady || myTeam === 2) return;
+      debug('Joining Blue team');
+      myTeam = 2; // Optimistic update
+      sendTaskUpdate('join_blue', 'SetNotActiveToActive');
+      render();
+    });
+
+    readyBtn.addEventListener('click', () => {
+      if (myTeam === 0 || gameStarting) return;
+
+      if (myReady) {
+        debug('Cancelling ready');
+        myReady = false; // Optimistic update
+        sendTaskUpdate('player_unready', 'SetNotActiveToActive');
+      } else {
+        debug('Readying up');
+        myReady = true; // Optimistic update
+        sendTaskUpdate('player_ready', 'SetNotActiveToActive');
+      }
+      render();
+    });
+
+    // ===========================================
+    // Countdown
+    // ===========================================
+
+    function startCountdown(seconds = 3) {
+      gameStarting = true;
+      render();
+
+      countdownOverlay.classList.add('show');
+      let count = seconds;
+      countdownNumber.textContent = count;
+
+      const interval = setInterval(() => {
+        count--;
+        if (count > 0) {
+          countdownNumber.textContent = count;
+        } else {
+          clearInterval(interval);
+          countdownNumber.textContent = 'GO!';
+          // Portals will handle the actual teleport
+        }
+      }, 1000);
+    }
+
+    // ===========================================
+    // Sync System
+    // ===========================================
+
+    function requestSync() {
+      if (!myUsername) return;
+      sendTaskUpdate('request_sync', 'SetNotActiveToActive');
+    }
+
+    function startSyncLoop() {
+      if (syncTimer) clearInterval(syncTimer);
+      syncTimer = setInterval(requestSync, SYNC_INTERVAL);
+      // Also request immediately
+      requestSync();
+    }
+
+    function stopSyncLoop() {
+      if (syncTimer) {
+        clearInterval(syncTimer);
+        syncTimer = null;
+      }
+    }
+
+    // ===========================================
+    // Portals SDK Integration
+    // ===========================================
+
+    function sendTaskUpdate(taskName, taskState) {
+      if (typeof PortalsSdk === 'undefined') {
+        console.log('[TeamSelect] SDK not available, would send:', taskName, taskState);
+        return;
+      }
+
+      try {
+        PortalsSdk.sendMessageToUnity(JSON.stringify({
+          TaskName: taskName,
+          TaskTargetState: taskState
+        }));
+        debug('Sent: ' + taskName);
+      } catch (e) {
+        console.error('[TeamSelect] Failed to send task:', e);
+      }
+    }
+
+    function handleMessage(message) {
+      console.log('[TeamSelect] Received:', message);
+
+      let msg = message;
+      if (typeof message === 'string') {
+        try {
+          msg = JSON.parse(message);
+        } catch (e) {
+          msg = message;
+        }
+      }
+
+      const msgStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
+
+      // Message formats:
+      // player_Username          - Set current player identity
+      // my_slot_X               - Slot X has been assigned to me
+      // sync_N1_T1_R1_N2_T2_R2... - Full slot sync (8 slots × 3 values)
+      // slot_claimed            - Slot claim succeeded
+      // slot_failed             - Slot claim failed, try another
+      // countdown_3             - Start countdown
+      // start                   - Game starting
+
+      if (msgStr.startsWith('player_')) {
+        myUsername = msgStr.substring(7);
+        debug('I am: ' + myUsername);
+
+        // Show main content, hide loading
+        loadingState.style.display = 'none';
+        mainContent.style.display = 'block';
+        subtitleText.textContent = 'Welcome, ' + myUsername;
+
+        // Request slot claim
+        sendTaskUpdate('claim_slot', 'SetNotActiveToActive');
+
+        // Start sync loop
+        startSyncLoop();
+      }
+      else if (msgStr.startsWith('my_slot_')) {
+        mySlot = parseInt(msgStr.substring(8)) || 0;
+        debug('Assigned slot: ' + mySlot);
+      }
+      else if (msgStr.startsWith('sync_')) {
+        if (parseSlotSync(msgStr)) {
+          findMySlotFromSync();
+          render();
+        }
+      }
+      else if (msgStr === 'slot_claimed') {
+        debug('Slot claimed successfully');
+      }
+      else if (msgStr === 'slot_failed') {
+        debug('Slot claim failed');
+        statusText.textContent = 'Lobby full - try again later';
+        statusText.className = 'status-text error';
+      }
+      else if (msgStr.startsWith('countdown_')) {
+        const seconds = parseInt(msgStr.substring(10)) || 3;
+        stopSyncLoop();
+        startCountdown(seconds);
+      }
+      else if (msgStr === 'start') {
+        stopSyncLoop();
+        startCountdown(3);
+      }
+      else if (msgStr === 'reset') {
+        // Full reset
+        for (let i = 1; i <= MAX_SLOTS; i++) {
+          slots[i] = { name: '', team: 0, ready: 0 };
+        }
+        mySlot = 0;
+        myTeam = 0;
+        myReady = false;
+        gameStarting = false;
+        countdownOverlay.classList.remove('show');
+        render();
+        startSyncLoop();
+      }
+    }
+
+    // ===========================================
+    // Initialize
+    // ===========================================
+
+    // Set up message listener
+    if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
+      PortalsSdk.setMessageListener(handleMessage);
+      console.log('[TeamSelect] SDK listener registered');
+    } else {
+      window.addEventListener('message', (e) => handleMessage(e.data));
+      console.log('[TeamSelect] Using fallback listener');
+    }
+
+    // Notify Portals that team select is ready
+    if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
+      PortalsSdk.sendMessageToUnity(JSON.stringify({
+        TaskName: 'team_select_ready',
+        TaskTargetState: 'SetNotActiveToCompleted'
+      }));
+    }
+
+    console.log('[TeamSelect] Initialized - waiting for player identity');
+  </script>
+</body>
+</html>
