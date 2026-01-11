@@ -165,13 +165,24 @@
   <script>
     // ===========================================
     // Game Over Screen for Portals TDM
-    // Receives: gameover_winner_redScore_blueScore
+    // Reads winner/scores from URL parameters on load
+    // URL format: ?winner=red&red=50&blue=32
     // ===========================================
 
     const gameOverBox = document.getElementById('gameOverBox');
     const winnerTextEl = document.getElementById('winnerText');
     const redScoreEl = document.getElementById('redScore');
     const blueScoreEl = document.getElementById('blueScore');
+
+    // Parse URL parameters
+    function getUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        winner: params.get('winner'),
+        red: params.get('red'),
+        blue: params.get('blue')
+      };
+    }
 
     function displayGameOver(winner, redScore, blueScore) {
       // Set winner text and color
@@ -227,14 +238,21 @@
       }
     }
 
-    // Set up Portals message listener
-    if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
-      PortalsSdk.setMessageListener(handleMessage);
-      console.log('[GameOver] SDK listener registered');
+    // Check URL parameters first (primary method)
+    const urlParams = getUrlParams();
+    if (urlParams.winner) {
+      console.log('[GameOver] Found URL params:', urlParams);
+      displayGameOver(urlParams.winner, urlParams.red || '0', urlParams.blue || '0');
     } else {
-      // Fallback for testing
-      window.addEventListener('message', (e) => handleMessage(e.data));
-      console.log('[GameOver] Using fallback listener');
+      // Fallback: Set up Portals message listener for backwards compatibility
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
+        PortalsSdk.setMessageListener(handleMessage);
+        console.log('[GameOver] SDK listener registered');
+      } else {
+        window.addEventListener('message', (e) => handleMessage(e.data));
+        console.log('[GameOver] Using fallback listener');
+      }
+      console.log('[GameOver] No URL params - waiting for message');
     }
 
     // Notify Portals that game over screen is ready
@@ -245,7 +263,7 @@
       }));
     }
 
-    console.log('[GameOver] Initialized - waiting for game data');
+    console.log('[GameOver] Initialized');
   </script>
 </body>
 </html>
