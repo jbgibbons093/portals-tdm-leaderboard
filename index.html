@@ -396,6 +396,7 @@
     }
 
     function resetGame() {
+      console.log('[Leaderboard] resetGame called - resetting state');
       gameActive = true;
       redScore = 0;
       blueScore = 0;
@@ -404,10 +405,10 @@
       redScoreEl.textContent = '0';
       blueScoreEl.textContent = '0';
       updateTimerDisplay();
-      gameOverEl.classList.remove('show');
 
       // Notify Portals that game reset is ready
       sendTaskUpdate('leaderboard_reset', 'SetNotActiveToCompleted');
+      console.log('[Leaderboard] Reset complete - gameActive:', gameActive);
     }
 
     // ===========================================
