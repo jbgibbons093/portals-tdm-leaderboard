@@ -518,6 +518,7 @@
     let myTeam = 0; // 0=none, 1=red, 2=blue
     let myReady = false;
     let gameStarting = false;
+    let allReadySent = false; // Prevent sending all_players_ready multiple times
     let syncTimer = null;
 
     // Slot data from server: { 1: {claimed, team, ready}, 2: {...}, ... }
@@ -749,8 +750,11 @@
       } else if (allReady.length === allWithTeam.length && allWithTeam.length >= 2) {
         statusText.textContent = 'All players ready!';
         statusText.className = 'status-text all-ready';
-        // Notify Portals that all are ready
-        sendTaskUpdate('all_players_ready', 'SetNotActiveToActive');
+        // Notify Portals that all are ready (only once)
+        if (!allReadySent) {
+          allReadySent = true;
+          sendTaskUpdate('all_players_ready', 'SetNotActiveToActive');
+        }
       } else {
         statusText.textContent = `${allReady.length}/${allWithTeam.length} players ready`;
         statusText.className = 'status-text';
@@ -822,6 +826,7 @@
             mySlot = 0;
             myTeam = 0;
             myReady = false;
+            allReadySent = false;
             loadingState.style.display = 'block';
             mainContent.style.display = 'none';
             for (let i = 1; i <= MAX_SLOTS; i++) {
@@ -913,6 +918,7 @@
         countdownOverlay.classList.remove('show');
         myTeam = 0;
         myReady = false;
+        allReadySent = false;
 
         if (mySlot > 0) {
           // Show main content, hide loading
@@ -958,6 +964,7 @@
         myTeam = 0;
         myReady = false;
         gameStarting = false;
+        allReadySent = false;
         countdownOverlay.classList.remove('show');
         loadingState.style.display = 'block';
         mainContent.style.display = 'none';
