@@ -519,6 +519,7 @@
     let myReady = false;
     let gameStarting = false;
     let allReadySent = false; // Prevent sending all_players_ready multiple times
+    let startGameSent = false; // Prevent sending start_game multiple times
     let syncTimer = null;
 
     // Slot data from server: { 1: {claimed, team, ready}, 2: {...}, ... }
@@ -800,7 +801,15 @@
     // Countdown
     // ===========================================
 
+    let countdownInterval = null; // Track countdown to prevent multiples
+
     function startCountdown(seconds = 3) {
+      // Prevent starting multiple countdowns
+      if (gameStarting) {
+        debug('Countdown already running, ignoring');
+        return;
+      }
+
       gameStarting = true;
       render();
 
@@ -808,16 +817,26 @@
       let count = seconds;
       countdownNumber.textContent = count;
 
-      const interval = setInterval(() => {
+      // Clear any existing interval
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+      }
+
+      countdownInterval = setInterval(() => {
         count--;
         if (count > 0) {
           countdownNumber.textContent = count;
         } else {
-          clearInterval(interval);
+          clearInterval(countdownInterval);
+          countdownInterval = null;
           countdownNumber.textContent = 'GO!';
 
-          // Trigger start_game in Portals (teleports players, starts timer)
-          sendTaskUpdate('start_game', 'SetNotActiveToActive');
+          // Trigger start_game in Portals (only once)
+          if (!startGameSent) {
+            startGameSent = true;
+            sendTaskUpdate('start_game', 'SetNotActiveToActive');
+            debug('Sent start_game');
+          }
 
           // Auto-reset after 3 seconds - iframe ready for next game
           setTimeout(() => {
@@ -827,6 +846,7 @@
             myTeam = 0;
             myReady = false;
             allReadySent = false;
+            startGameSent = false;
             loadingState.style.display = 'block';
             mainContent.style.display = 'none';
             for (let i = 1; i <= MAX_SLOTS; i++) {
@@ -919,6 +939,7 @@
         myTeam = 0;
         myReady = false;
         allReadySent = false;
+        startGameSent = false;
 
         if (mySlot > 0) {
           // Show main content, hide loading
@@ -965,6 +986,11 @@
         myReady = false;
         gameStarting = false;
         allReadySent = false;
+        startGameSent = false;
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+          countdownInterval = null;
+        }
         countdownOverlay.classList.remove('show');
         loadingState.style.display = 'block';
         mainContent.style.display = 'none';
