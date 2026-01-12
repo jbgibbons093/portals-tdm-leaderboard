@@ -582,6 +582,14 @@
         .filter(([_, s]) => s.claimed === 1)
         .map(([slot, _]) => 'P' + slot);
       debug('Sync: ' + (activePlayers.length > 0 ? activePlayers.join(', ') : 'no players'));
+
+      // If all slots are empty, reset game starting state (game was reset)
+      if (activePlayers.length === 0 && gameStarting) {
+        gameStarting = false;
+        countdownOverlay.classList.remove('show');
+        debug('Auto-reset: all slots empty');
+      }
+
       return true;
     }
 
