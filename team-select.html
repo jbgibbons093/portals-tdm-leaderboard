@@ -929,6 +929,17 @@
         countdownOverlay.classList.remove('show');
         loadingState.style.display = 'block';
         mainContent.style.display = 'none';
+
+        // Re-request slot assignment after reset
+        setTimeout(() => {
+          if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
+            PortalsSdk.sendMessageToUnity(JSON.stringify({
+              TaskName: 'team_select_ready',
+              TaskTargetState: 'SetNotActiveToCompleted'
+            }));
+            console.log('[TeamSelect] Re-requested slot after reset');
+          }
+        }, 500);
       }
     }
 
