@@ -812,6 +812,22 @@
           clearInterval(interval);
           countdownNumber.textContent = 'GO!';
           // Portals will handle the actual teleport
+
+          // Auto-reset after 3 seconds - iframe ready for next game
+          setTimeout(() => {
+            gameStarting = false;
+            countdownOverlay.classList.remove('show');
+            mySlot = 0;
+            myTeam = 0;
+            myReady = false;
+            loadingState.style.display = 'block';
+            mainContent.style.display = 'none';
+            for (let i = 1; i <= MAX_SLOTS; i++) {
+              slots[i] = { claimed: 0, team: 0, ready: 0 };
+            }
+            stopSyncLoop();
+            debug('Auto-reset after game start');
+          }, 3000);
         }
       }, 1000);
     }
