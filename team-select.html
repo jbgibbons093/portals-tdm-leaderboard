@@ -890,6 +890,12 @@
         mySlot = parseInt(msgStr.substring(8)) || 0;
         debug('Assigned slot: ' + mySlot);
 
+        // Always reset countdown state when receiving new slot (handles stale iframe)
+        gameStarting = false;
+        countdownOverlay.classList.remove('show');
+        myTeam = 0;
+        myReady = false;
+
         if (mySlot > 0) {
           // Show main content, hide loading
           loadingState.style.display = 'none';
