@@ -408,12 +408,18 @@
     }
 
     // Notify Portals that game over screen is ready
-    if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
-      PortalsSdk.sendMessageToUnity(JSON.stringify({
-        TaskName: 'gameover_ready',
-        TaskTargetState: 'SetNotActiveToCompleted'
-      }));
-    }
+    // Use delay to ensure SDK connection is established
+    setTimeout(() => {
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
+        PortalsSdk.sendMessageToUnity(JSON.stringify({
+          TaskName: 'gameover_ready',
+          TaskTargetState: 'SetNotActiveToCompleted'
+        }));
+        console.log('[GameOver] Sent gameover_ready to Portals');
+      } else {
+        console.log('[GameOver] SDK not available - cannot send gameover_ready');
+      }
+    }, 500);
 
     console.log('[GameOver] Initialized');
   </script>
