@@ -557,13 +557,13 @@
     // ===========================================
 
     function parseSlotSync(msgStr) {
-      // Format: sync_C1_T1_R1_C2_T2_R2_...
+      // Format: lobbysync_C1_T1_R1_C2_T2_R2_...
       // C=claimed (0/1), T=team (0/1/2), R=ready (0/1)
       // 8 slots × 3 values = 24 values total
 
-      if (!msgStr.startsWith('sync_')) return false;
+      if (!msgStr.startsWith('lobbysync_')) return false;
 
-      const data = msgStr.substring(5); // Remove 'sync_'
+      const data = msgStr.substring(10); // Remove 'lobbysync_'
       const parts = data.split('_');
 
       // We expect 24 parts (8 slots × 3 values each)
@@ -900,7 +900,7 @@
           startSyncLoop();
         }
       }
-      else if (msgStr.startsWith('sync_')) {
+      else if (msgStr.startsWith('lobbysync_')) {
         if (parseSlotSync(msgStr)) {
           updateMyStateFromSync();
           render();
