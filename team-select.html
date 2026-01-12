@@ -831,12 +831,8 @@
           countdownInterval = null;
           countdownNumber.textContent = 'GO!';
 
-          // Trigger start_game in Portals (only once)
-          if (!startGameSent) {
-            startGameSent = true;
-            sendTaskUpdate('start_game', 'SetNotActiveToActive');
-            debug('Sent start_game');
-          }
+          // Portals handles start_game via all_players_ready delayed effect
+          debug('GO! - Portals will trigger start_game');
 
           // Auto-reset after 3 seconds - iframe ready for next game
           setTimeout(() => {
