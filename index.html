@@ -263,7 +263,11 @@
     // ===========================================
 
     function updateScore(team, newScore) {
-      if (!gameActive) return;
+      console.log('[Leaderboard] updateScore called:', team, newScore, '- gameActive:', gameActive);
+      if (!gameActive) {
+        console.log('[Leaderboard] BLOCKED - gameActive is false!');
+        return;
+      }
 
       const scoreEl = team === 'red' ? redScoreEl : blueScoreEl;
       const oldScore = team === 'red' ? redScore : blueScore;
