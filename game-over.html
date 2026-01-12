@@ -368,6 +368,17 @@
     const urlParams = getUrlParams();
     const winner = urlParams.winner;
 
+    // Function to send gameover_ready to Portals
+    function sendGameoverReady() {
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
+        PortalsSdk.sendMessageToUnity(JSON.stringify({
+          TaskName: 'gameover_ready',
+          TaskTargetState: 'SetNotActiveToCompleted'
+        }));
+        console.log('[GameOver] Sent gameover_ready to Portals');
+      }
+    }
+
     if (winner) {
       console.log('[GameOver] Winner from URL:', winner);
 
@@ -385,6 +396,12 @@
             const blueScore = Math.min(50, parseInt(parts[2]) || 0);
             displayGameOver(winner, redScore, blueScore);
           }
+        }
+
+        // Handle show_gameover trigger - re-send gameover_ready when iframe is re-activated
+        if (msg === 'show_gameover') {
+          console.log('[GameOver] Re-activation trigger received');
+          sendGameoverReady();
         }
       }
 
@@ -410,15 +427,7 @@
     // Notify Portals that game over screen is ready
     // Use delay to ensure SDK connection is established
     setTimeout(() => {
-      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
-        PortalsSdk.sendMessageToUnity(JSON.stringify({
-          TaskName: 'gameover_ready',
-          TaskTargetState: 'SetNotActiveToCompleted'
-        }));
-        console.log('[GameOver] Sent gameover_ready to Portals');
-      } else {
-        console.log('[GameOver] SDK not available - cannot send gameover_ready');
-      }
+      sendGameoverReady();
     }, 500);
 
     console.log('[GameOver] Initialized');
