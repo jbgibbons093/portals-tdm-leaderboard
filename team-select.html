@@ -811,7 +811,9 @@
         } else {
           clearInterval(interval);
           countdownNumber.textContent = 'GO!';
-          // Portals will handle the actual teleport
+
+          // Trigger start_game in Portals (teleports players, starts timer)
+          sendTaskUpdate('start_game', 'SetNotActiveToActive');
 
           // Auto-reset after 3 seconds - iframe ready for next game
           setTimeout(() => {
