@@ -6,7 +6,7 @@
   <title>TDM Leaderboard</title>
 
   <!-- Portals SDK -->
-  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005462"></script>
 
   <style>
     * {
@@ -193,6 +193,7 @@
     let blueScore = 0;
     let timeRemaining = GAME_DURATION;
     let gameActive = true;
+    let gameStartedClean = false;  // True once we've seen a legitimate low score
 
     // DOM elements
     const redScoreEl = document.getElementById('redScore');
@@ -229,8 +230,27 @@
       }
     }
 
+    let lastElapsed = 0;
+
     // Update time from server-provided elapsed seconds
     function setElapsedTime(elapsed) {
+      // Detect game restart:
+      // 1. ANY time update while game is inactive = new game starting
+      // 2. OR elapsed dropped significantly (timer reset while game was active)
+      const gameWasInactive = !gameActive;
+      const elapsedDropped = elapsed < lastElapsed - 20;  // Significant backward jump
+
+      if (gameWasInactive || elapsedDropped) {
+        console.log('[Leaderboard] Detected game restart - elapsed:', elapsed, 'lastElapsed:', lastElapsed, 'gameActive:', gameActive, 'reason:', gameWasInactive ? 'gameWasInactive' : 'elapsedDropped');
+        gameActive = true;
+        gameStartedClean = false;  // Reset - need to see low score to confirm clean start
+        redScore = 0;
+        blueScore = 0;
+        redScoreEl.textContent = '0';
+        blueScoreEl.textContent = '0';
+      }
+
+      lastElapsed = elapsed;
       timeRemaining = Math.max(0, GAME_DURATION - elapsed);
       updateTimerDisplay();
 
@@ -263,10 +283,50 @@
     // ===========================================
 
     function updateScore(team, newScore) {
-      console.log('[Leaderboard] updateScore called:', team, newScore, '- gameActive:', gameActive);
-      if (!gameActive) {
-        console.log('[Leaderboard] BLOCKED - gameActive is false!');
+      console.log('[Leaderboard] updateScore called:', team, newScore, '- gameActive:', gameActive, '- gameStartedClean:', gameStartedClean);
+
+      // STALE DATA FILTER: If game hasn't started clean yet (no low score seen),
+      // reject suspiciously high scores as stale data from previous game
+      if (!gameStartedClean && newScore >= 20) {
+        console.log('[Leaderboard] REJECTED stale score - no clean start yet, score:', newScore);
         return;
+      }
+
+      // If we see a low score (1-10), the game has started cleanly
+      if (newScore <= 10 && newScore >= 1) {
+        if (!gameStartedClean) {
+          console.log('[Leaderboard] Game started clean - first legitimate score:', newScore);
+        }
+        gameStartedClean = true;
+      }
+
+      const currentScore = team === 'red' ? redScore : blueScore;
+
+      // If we receive a low score while inactive, activate
+      if (newScore <= 5 && !gameActive) {
+        console.log('[Leaderboard] Low score received while inactive - activating game');
+        gameActive = true;
+        gameStartedClean = true;
+        redScore = 0;
+        blueScore = 0;
+        redScoreEl.textContent = '0';
+        blueScoreEl.textContent = '0';
+      }
+
+      // FAILSAFE: If game inactive but score is lower than current, new game started
+      if (!gameActive) {
+        if (newScore < currentScore) {
+          console.log('[Leaderboard] Score DECREASED while inactive - forcing reset! new:', newScore, 'current:', currentScore);
+          gameActive = true;
+          gameStartedClean = true;
+          redScore = 0;
+          blueScore = 0;
+          redScoreEl.textContent = '0';
+          blueScoreEl.textContent = '0';
+        } else {
+          console.log('[Leaderboard] BLOCKED - gameActive is false, score:', newScore, 'current:', currentScore);
+          return;
+        }
       }
 
       const scoreEl = team === 'red' ? redScoreEl : blueScoreEl;
@@ -375,17 +435,35 @@
           const elapsed = parseFloat(parts[0]);
           const red = parseFloat(parts[1]);
           const blue = parseFloat(parts[2]);
+
+          // Process elapsed first - this may trigger a reset
+          const wasInactive = !gameActive;
           if (!isNaN(elapsed)) setElapsedTime(elapsed);
-          if (!isNaN(red)) {
-            redScore = red;
-            redScoreEl.textContent = red;
-          }
-          if (!isNaN(blue)) {
-            blueScore = blue;
-            blueScoreEl.textContent = blue;
+
+          // Only apply synced scores if this wasn't a reset (new game)
+          // A reset is indicated by: was inactive, or elapsed is very low
+          const isNewGame = wasInactive || elapsed <= 5;
+          if (isNewGame) {
+            // New game - reset scores to 0
+            redScore = 0;
+            blueScore = 0;
+            redScoreEl.textContent = '0';
+            blueScoreEl.textContent = '0';
+            gameStartedClean = false;
+            console.log('[Leaderboard] Sync - new game detected, scores reset');
+          } else {
+            // Only update scores if new value >= current (prevents stale data from overwriting)
+            if (!isNaN(red) && red >= redScore) {
+              redScore = red;
+              redScoreEl.textContent = red;
+            }
+            if (!isNaN(blue) && blue >= blueScore) {
+              blueScore = blue;
+              blueScoreEl.textContent = blue;
+            }
           }
           updateTimerDisplay();
-          console.log('[Leaderboard] Sync - elapsed:', elapsed, 'red:', red, 'blue:', blue);
+          console.log('[Leaderboard] Sync - elapsed:', elapsed, 'red:', red, 'blue:', blue, 'isNewGame:', isNewGame);
         }
       } else if (msg === 'reset') {
         resetGame();
@@ -402,6 +480,7 @@
     function resetGame() {
       console.log('[Leaderboard] resetGame called - resetting state');
       gameActive = true;
+      gameStartedClean = false;
       redScore = 0;
       blueScore = 0;
       timeRemaining = GAME_DURATION;

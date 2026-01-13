@@ -6,7 +6,7 @@
   <title>Team Select</title>
 
   <!-- Portals SDK -->
-  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005502"></script>
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
@@ -37,7 +37,6 @@
       background: radial-gradient(ellipse at center, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.95) 100%);
     }
 
-    /* Scanline effect */
     .overlay::before {
       content: '';
       position: absolute;
@@ -45,13 +44,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: repeating-linear-gradient(
-        0deg,
-        rgba(0,0,0,0.1) 0px,
-        rgba(0,0,0,0.1) 1px,
-        transparent 1px,
-        transparent 3px
-      );
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 3px);
       pointer-events: none;
       z-index: 10;
     }
@@ -64,12 +57,9 @@
       padding: 30px 40px;
       min-width: 700px;
       max-width: 900px;
-      box-shadow:
-        0 0 60px rgba(0,0,0,0.8),
-        inset 0 1px 0 rgba(255,255,255,0.1);
+      box-shadow: 0 0 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
     }
 
-    /* Header */
     .header {
       text-align: center;
       margin-bottom: 30px;
@@ -96,7 +86,6 @@
       margin-top: 8px;
     }
 
-    /* Teams Container */
     .teams-wrapper {
       display: flex;
       gap: 30px;
@@ -155,19 +144,6 @@
       margin-bottom: 15px;
     }
 
-    .player-list::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    .player-list::-webkit-scrollbar-track {
-      background: rgba(255,255,255,0.05);
-    }
-
-    .player-list::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,0.2);
-      border-radius: 2px;
-    }
-
     .player-item {
       display: flex;
       align-items: center;
@@ -176,18 +152,11 @@
       background: rgba(255,255,255,0.03);
       border-radius: 6px;
       margin-bottom: 6px;
-      transition: all 0.2s ease;
     }
 
     .player-item.is-me {
       background: rgba(168,85,247,0.2);
       border: 1px solid rgba(168,85,247,0.4);
-    }
-
-    .player-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
     }
 
     .player-name {
@@ -265,7 +234,6 @@
       border-color: rgba(255,255,255,0.2);
     }
 
-    /* Bottom Actions */
     .actions {
       display: flex;
       gap: 20px;
@@ -304,23 +272,11 @@
       border: 2px solid rgba(239,68,68,0.5);
     }
 
-    .ready-btn.is-ready:hover:not(:disabled) {
-      background: linear-gradient(180deg, rgba(239,68,68,0.5) 0%, rgba(185,28,28,0.6) 100%);
-    }
-
     .ready-btn:disabled {
       opacity: 0.4;
       cursor: not-allowed;
     }
 
-    .ready-btn.locked {
-      background: rgba(74,222,128,0.2);
-      color: #4ade80;
-      border-color: rgba(74,222,128,0.4);
-      cursor: default;
-    }
-
-    /* Status Bar */
     .status-bar {
       text-align: center;
       margin-top: 20px;
@@ -339,16 +295,11 @@
       animation: pulse 1.5s ease-in-out infinite;
     }
 
-    .status-text.error {
-      color: #ef4444;
-    }
-
     @keyframes pulse {
       0%, 100% { opacity: 0.8; }
       50% { opacity: 1; }
     }
 
-    /* Countdown overlay */
     .countdown-overlay {
       position: absolute;
       top: 0;
@@ -373,16 +324,8 @@
       font-weight: 900;
       color: #ffffff;
       text-shadow: 0 0 60px rgba(255,255,255,0.5);
-      animation: countPulse 1s ease-in-out infinite;
     }
 
-    @keyframes countPulse {
-      0% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.1); opacity: 0.8; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    /* Empty state */
     .empty-team {
       flex: 1;
       display: flex;
@@ -395,7 +338,6 @@
       letter-spacing: 2px;
     }
 
-    /* Loading state */
     .loading-state {
       text-align: center;
       padding: 40px;
@@ -423,7 +365,6 @@
       letter-spacing: 3px;
     }
 
-    /* Debug panel */
     #debug {
       position: fixed;
       bottom: 10px;
@@ -434,16 +375,14 @@
       font-size: 11px;
       font-family: monospace;
       z-index: 999;
-      max-width: 400px;
+      max-width: 500px;
       border-radius: 4px;
-      display: block; /* Debug enabled */
     }
   </style>
 </head>
 <body>
   <div class="overlay">
     <div class="team-select-container">
-      <!-- Countdown Overlay -->
       <div class="countdown-overlay" id="countdownOverlay">
         <div class="countdown-number" id="countdownNumber">3</div>
       </div>
@@ -453,16 +392,13 @@
         <div class="subtitle" id="subtitleText">Choose your side</div>
       </div>
 
-      <!-- Loading State (shown until we get slot assignment) -->
       <div class="loading-state" id="loadingState">
         <div class="loading-spinner"></div>
         <div class="loading-text">Joining lobby...</div>
       </div>
 
-      <!-- Main Content (hidden until ready) -->
       <div id="mainContent" style="display: none;">
         <div class="teams-wrapper">
-          <!-- Red Team -->
           <div class="team-column red">
             <div class="team-header">
               <span class="team-name red">Red Team</span>
@@ -474,7 +410,6 @@
             <button class="join-btn red" id="joinRedBtn">Join Red</button>
           </div>
 
-          <!-- Blue Team -->
           <div class="team-column blue">
             <div class="team-header">
               <span class="team-name blue">Blue Team</span>
@@ -498,38 +433,33 @@
     </div>
   </div>
 
-  <!-- Debug Panel -->
-  <div id="debug">Debug info</div>
+  <div id="debug">v34 Loading...</div>
 
   <script>
     // ===========================================
-    // Team Selection for Portals TDM
-    // Polling-based slot sync system
-    // Uses "Player 1", "Player 2" etc. since Portals
-    // variables can only store numbers, not strings
+    // Team Selection for Portals TDM - v34
+    // SIMPLIFIED: Only responds to my_slot_X and lobbysync_
+    // Blocks matchmaking if game is in progress (sync_ detected)
     // ===========================================
 
     const MAX_SLOTS = 8;
     const MAX_PER_TEAM = 4;
-    const SYNC_INTERVAL = 1500; // Poll every 1.5 seconds
 
-    // State
-    let mySlot = 0; // 1-8, or 0 if not assigned
-    let myTeam = 0; // 0=none, 1=red, 2=blue
+    // Core state
+    let mySlot = 0;      // 1-8, or 0 if not assigned
+    let myTeam = 0;      // 0=none, 1=red, 2=blue
     let myReady = false;
     let gameStarting = false;
-    let allReadySent = false; // Prevent sending all_players_ready multiple times
-    let startGameSent = false; // Prevent sending start_game multiple times
-    let syncTimer = null;
+    let allReadySent = false;
+    let gameInProgress = false;  // True if we detect an active game
 
-    // Slot data from server: { 1: {claimed, team, ready}, 2: {...}, ... }
-    // claimed: 0=empty, 1=claimed (we show as "Player X")
+    // Slot data: { 1: {claimed, team, ready}, ... }
     const slots = {};
     for (let i = 1; i <= MAX_SLOTS; i++) {
       slots[i] = { claimed: 0, team: 0, ready: 0 };
     }
 
-    // DOM Elements
+    // DOM
     const loadingState = document.getElementById('loadingState');
     const mainContent = document.getElementById('mainContent');
     const redPlayerList = document.getElementById('redPlayerList');
@@ -546,201 +476,138 @@
     const debugEl = document.getElementById('debug');
 
     // ===========================================
-    // Debug Logging
+    // Debug
     // ===========================================
-
     function debug(msg) {
-      console.log('[TeamSelect]', msg);
-      debugEl.textContent = msg;
+      console.log('[TS v33]', msg);
+      debugEl.textContent = 'v33 | slot:' + mySlot + ' team:' + myTeam + ' | ' + msg;
     }
 
     // ===========================================
-    // Slot Management
+    // Send task to Portals
     // ===========================================
+    function sendTask(taskName, state) {
+      if (typeof PortalsSdk === 'undefined' || !PortalsSdk.sendMessageToUnity) {
+        console.log('[TS] No SDK, would send:', taskName);
+        return;
+      }
+      PortalsSdk.sendMessageToUnity(JSON.stringify({
+        TaskName: taskName,
+        TaskTargetState: state || 'SetNotActiveToActive'
+      }));
+      debug('Sent: ' + taskName);
+    }
 
-    function parseSlotSync(msgStr) {
+    // ===========================================
+    // Reset all state
+    // ===========================================
+    function resetState() {
+      mySlot = 0;
+      myTeam = 0;
+      myReady = false;
+      gameStarting = false;
+      allReadySent = false;
+      for (let i = 1; i <= MAX_SLOTS; i++) {
+        slots[i] = { claimed: 0, team: 0, ready: 0 };
+      }
+      countdownOverlay.classList.remove('show');
+      loadingState.style.display = 'block';
+      mainContent.style.display = 'none';
+    }
+
+    // ===========================================
+    // Parse lobbysync message
+    // ===========================================
+    function parseSync(msgStr) {
       // Format: lobbysync_C1_T1_R1_C2_T2_R2_...
-      // C=claimed (0/1), T=team (0/1/2), R=ready (0/1)
-      // 8 slots × 3 values = 24 values total
-
       if (!msgStr.startsWith('lobbysync_')) return false;
 
-      const data = msgStr.substring(10); // Remove 'lobbysync_'
-      const parts = data.split('_');
+      const parts = msgStr.substring(10).split('_');
 
-      // We expect 24 parts (8 slots × 3 values each)
       for (let i = 0; i < MAX_SLOTS; i++) {
-        const baseIndex = i * 3;
-        if (baseIndex + 2 < parts.length) {
-          const claimed = parseInt(parts[baseIndex]) || 0;
-          const team = parseInt(parts[baseIndex + 1]) || 0;
-          const ready = parseInt(parts[baseIndex + 2]) || 0;
-
-          slots[i + 1] = { claimed, team, ready };
+        const idx = i * 3;
+        if (idx + 2 < parts.length) {
+          slots[i + 1] = {
+            claimed: parseInt(parts[idx]) || 0,
+            team: parseInt(parts[idx + 1]) || 0,
+            ready: parseInt(parts[idx + 2]) || 0
+          };
         }
       }
 
-      const activePlayers = Object.entries(slots)
-        .filter(([_, s]) => s.claimed === 1)
-        .map(([slot, _]) => 'P' + slot);
-      debug('Sync: ' + (activePlayers.length > 0 ? activePlayers.join(', ') : 'no players'));
-
-      // If all slots are empty, reset game starting state (game was reset)
-      if (activePlayers.length === 0 && gameStarting) {
-        gameStarting = false;
-        countdownOverlay.classList.remove('show');
-        debug('Auto-reset: all slots empty');
+      // Update my state from my slot
+      if (mySlot > 0 && slots[mySlot]) {
+        myTeam = slots[mySlot].team;
+        myReady = slots[mySlot].ready === 1;
       }
 
       return true;
     }
 
-    function getPlayersOnTeam(teamNum) {
-      return Object.entries(slots)
-        .filter(([_, data]) => data.claimed === 1 && data.team === teamNum)
-        .map(([slot, data]) => ({ slot: parseInt(slot), ...data }));
-    }
-
-    function getReadyCount(teamNum) {
-      return getPlayersOnTeam(teamNum).filter(p => p.ready === 1).length;
-    }
-
-    function getAllPlayersWithTeam() {
-      return Object.entries(slots)
-        .filter(([_, data]) => data.claimed === 1 && data.team > 0)
-        .map(([slot, data]) => ({ slot: parseInt(slot), ...data }));
-    }
-
-    function updateMyStateFromSync() {
-      // After sync, update my local state from my slot's data
-      if (mySlot > 0 && slots[mySlot]) {
-        myTeam = slots[mySlot].team;
-        myReady = slots[mySlot].ready === 1;
-        debug('My state: slot=' + mySlot + ' team=' + myTeam + ' ready=' + myReady);
-      }
-    }
-
     // ===========================================
     // Rendering
     // ===========================================
+    function getPlayersOnTeam(teamNum) {
+      return Object.entries(slots)
+        .filter(([_, d]) => d.claimed === 1 && d.team === teamNum)
+        .map(([s, d]) => ({ slot: parseInt(s), ...d }));
+    }
 
     function render() {
-      if (mySlot === 0) return; // Not yet assigned a slot
+      if (mySlot === 0) return;
 
       const redPlayers = getPlayersOnTeam(1);
       const bluePlayers = getPlayersOnTeam(2);
 
-      // Render red team
-      if (redPlayers.length === 0) {
-        redPlayerList.innerHTML = '<div class="empty-team">No players</div>';
-      } else {
-        redPlayerList.innerHTML = redPlayers.map(p => renderPlayer(p)).join('');
-      }
-      redCount.textContent = `${redPlayers.length}/${MAX_PER_TEAM}`;
+      // Red team list
+      redPlayerList.innerHTML = redPlayers.length === 0
+        ? '<div class="empty-team">No players</div>'
+        : redPlayers.map(p => `
+            <div class="player-item ${p.slot === mySlot ? 'is-me' : ''}">
+              <span class="player-name">Player ${p.slot}${p.slot === mySlot ? ' (You)' : ''}</span>
+              <span class="player-status ${p.ready ? 'ready' : 'not-ready'}">${p.ready ? 'Ready' : 'Waiting'}</span>
+            </div>
+          `).join('');
+      redCount.textContent = redPlayers.length + '/' + MAX_PER_TEAM;
 
-      // Render blue team
-      if (bluePlayers.length === 0) {
-        bluePlayerList.innerHTML = '<div class="empty-team">No players</div>';
-      } else {
-        bluePlayerList.innerHTML = bluePlayers.map(p => renderPlayer(p)).join('');
-      }
-      blueCount.textContent = `${bluePlayers.length}/${MAX_PER_TEAM}`;
+      // Blue team list
+      bluePlayerList.innerHTML = bluePlayers.length === 0
+        ? '<div class="empty-team">No players</div>'
+        : bluePlayers.map(p => `
+            <div class="player-item ${p.slot === mySlot ? 'is-me' : ''}">
+              <span class="player-name">Player ${p.slot}${p.slot === mySlot ? ' (You)' : ''}</span>
+              <span class="player-status ${p.ready ? 'ready' : 'not-ready'}">${p.ready ? 'Ready' : 'Waiting'}</span>
+            </div>
+          `).join('');
+      blueCount.textContent = bluePlayers.length + '/' + MAX_PER_TEAM;
 
-      // Update buttons
-      updateJoinButtons(redPlayers.length, bluePlayers.length);
-      updateReadyButton();
-      updateStatus();
-    }
+      // Join buttons
+      joinRedBtn.disabled = myReady || myTeam === 1 || redPlayers.length >= MAX_PER_TEAM;
+      joinRedBtn.textContent = myTeam === 1 ? 'Joined' : (redPlayers.length >= MAX_PER_TEAM ? 'Full' : 'Join Red');
+      joinRedBtn.classList.toggle('joined', myTeam === 1);
 
-    function renderPlayer(player) {
-      const isMe = player.slot === mySlot;
-      const playerName = 'Player ' + player.slot;
-      const statusClass = player.ready === 1 ? 'ready' : 'not-ready';
-      const statusLabel = player.ready === 1 ? 'Ready' : 'Waiting';
+      joinBlueBtn.disabled = myReady || myTeam === 2 || bluePlayers.length >= MAX_PER_TEAM;
+      joinBlueBtn.textContent = myTeam === 2 ? 'Joined' : (bluePlayers.length >= MAX_PER_TEAM ? 'Full' : 'Join Blue');
+      joinBlueBtn.classList.toggle('joined', myTeam === 2);
 
-      return `
-        <div class="player-item ${isMe ? 'is-me' : ''}">
-          <div class="player-info">
-            <span class="player-name">${playerName}${isMe ? ' (You)' : ''}</span>
-          </div>
-          <span class="player-status ${statusClass}">${statusLabel}</span>
-        </div>
-      `;
-    }
-
-    function updateJoinButtons(redCount, blueCount) {
-      // Disable if already ready (locked in)
-      if (myReady) {
-        joinRedBtn.disabled = true;
-        joinBlueBtn.disabled = true;
-        joinRedBtn.classList.add('joined');
-        joinBlueBtn.classList.add('joined');
-        joinRedBtn.textContent = myTeam === 1 ? 'Joined' : 'Join Red';
-        joinBlueBtn.textContent = myTeam === 2 ? 'Joined' : 'Join Blue';
-        return;
-      }
-
-      // Reset classes
-      joinRedBtn.classList.remove('joined');
-      joinBlueBtn.classList.remove('joined');
-
-      // Red button
-      if (myTeam === 1) {
-        joinRedBtn.textContent = 'Joined';
-        joinRedBtn.classList.add('joined');
-        joinRedBtn.disabled = true;
-      } else if (redCount >= MAX_PER_TEAM) {
-        joinRedBtn.textContent = 'Full';
-        joinRedBtn.disabled = true;
-      } else {
-        joinRedBtn.textContent = 'Join Red';
-        joinRedBtn.disabled = false;
-      }
-
-      // Blue button
-      if (myTeam === 2) {
-        joinBlueBtn.textContent = 'Joined';
-        joinBlueBtn.classList.add('joined');
-        joinBlueBtn.disabled = true;
-      } else if (blueCount >= MAX_PER_TEAM) {
-        joinBlueBtn.textContent = 'Full';
-        joinBlueBtn.disabled = true;
-      } else {
-        joinBlueBtn.textContent = 'Join Blue';
-        joinBlueBtn.disabled = false;
-      }
-    }
-
-    function updateReadyButton() {
+      // Ready button
       if (myTeam === 0) {
         readyBtn.disabled = true;
         readyBtn.textContent = 'Select a Team';
         readyBtn.className = 'ready-btn not-ready';
-        return;
-      }
-
-      if (gameStarting) {
+      } else if (gameStarting) {
         readyBtn.disabled = true;
         readyBtn.textContent = 'Starting...';
-        readyBtn.className = 'ready-btn locked';
-        return;
-      }
-
-      readyBtn.disabled = false;
-      if (myReady) {
-        readyBtn.textContent = 'Cancel Ready';
-        readyBtn.className = 'ready-btn is-ready';
-      } else {
-        readyBtn.textContent = 'Ready Up';
         readyBtn.className = 'ready-btn not-ready';
+      } else {
+        readyBtn.disabled = false;
+        readyBtn.textContent = myReady ? 'Cancel Ready' : 'Ready Up';
+        readyBtn.className = myReady ? 'ready-btn is-ready' : 'ready-btn not-ready';
       }
-    }
 
-    function updateStatus() {
-      const allWithTeam = getAllPlayersWithTeam();
-      const allReady = allWithTeam.filter(p => p.ready === 1);
-      const redPlayers = getPlayersOnTeam(1);
-      const bluePlayers = getPlayersOnTeam(2);
+      // Status
+      const allWithTeam = Object.values(slots).filter(s => s.claimed && s.team > 0);
+      const allReady = allWithTeam.filter(s => s.ready);
 
       if (allWithTeam.length === 0) {
         statusText.textContent = 'Waiting for players...';
@@ -751,48 +618,47 @@
       } else if (allReady.length === allWithTeam.length && allWithTeam.length >= 2) {
         statusText.textContent = 'All players ready!';
         statusText.className = 'status-text all-ready';
-        // Notify Portals that all are ready (only once)
         if (!allReadySent) {
           allReadySent = true;
-          sendTaskUpdate('all_players_ready', 'SetNotActiveToActive');
+          sendTask('all_players_ready');
         }
       } else {
-        statusText.textContent = `${allReady.length}/${allWithTeam.length} players ready`;
+        statusText.textContent = allReady.length + '/' + allWithTeam.length + ' players ready';
         statusText.className = 'status-text';
       }
+
+      debug('Rendered: red=' + redPlayers.length + ' blue=' + bluePlayers.length);
     }
 
     // ===========================================
-    // Button Actions
+    // Button handlers
     // ===========================================
-
     joinRedBtn.addEventListener('click', () => {
-      if (myReady || myTeam === 1) return;
-      debug('Joining Red team');
-      myTeam = 1; // Optimistic update
-      sendTaskUpdate('join_red', 'SetNotActiveToActive');
+      if (myReady || myTeam === 1 || mySlot === 0) return;
+      myTeam = 1;
+      slots[mySlot].team = 1;
+      sendTask('join_red');
       render();
     });
 
     joinBlueBtn.addEventListener('click', () => {
-      if (myReady || myTeam === 2) return;
-      debug('Joining Blue team');
-      myTeam = 2; // Optimistic update
-      sendTaskUpdate('join_blue', 'SetNotActiveToActive');
+      if (myReady || myTeam === 2 || mySlot === 0) return;
+      myTeam = 2;
+      slots[mySlot].team = 2;
+      sendTask('join_blue');
       render();
     });
 
     readyBtn.addEventListener('click', () => {
-      if (myTeam === 0 || gameStarting) return;
-
+      if (myTeam === 0 || gameStarting || mySlot === 0) return;
       if (myReady) {
-        debug('Cancelling ready');
-        myReady = false; // Optimistic update
-        sendTaskUpdate('player_unready', 'SetNotActiveToActive');
+        myReady = false;
+        slots[mySlot].ready = 0;
+        sendTask('player_unready');
       } else {
-        debug('Readying up');
-        myReady = true; // Optimistic update
-        sendTaskUpdate('player_ready', 'SetNotActiveToActive');
+        myReady = true;
+        slots[mySlot].ready = 1;
+        sendTask('player_ready');
       }
       render();
     });
@@ -800,233 +666,165 @@
     // ===========================================
     // Countdown
     // ===========================================
-
-    let countdownInterval = null; // Track countdown to prevent multiples
-
-    function startCountdown(seconds = 3) {
-      // Prevent starting multiple countdowns
-      if (gameStarting) {
-        debug('Countdown already running, ignoring');
-        return;
-      }
-
+    function startCountdown(seconds) {
+      if (gameStarting) return;
       gameStarting = true;
-      render();
-
       countdownOverlay.classList.add('show');
-      let count = seconds;
+
+      let count = seconds || 3;
       countdownNumber.textContent = count;
 
-      // Clear any existing interval
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-      }
-
-      countdownInterval = setInterval(() => {
+      const interval = setInterval(() => {
         count--;
         if (count > 0) {
           countdownNumber.textContent = count;
         } else {
-          clearInterval(countdownInterval);
-          countdownInterval = null;
+          clearInterval(interval);
           countdownNumber.textContent = 'GO!';
-
-          // Portals handles start_game via all_players_ready delayed effect
-          debug('GO! - Portals will trigger start_game');
-
-          // Auto-reset after 3 seconds - iframe ready for next game
           setTimeout(() => {
-            gameStarting = false;
-            countdownOverlay.classList.remove('show');
-            mySlot = 0;
-            myTeam = 0;
-            myReady = false;
-            allReadySent = false;
-            startGameSent = false;
-            loadingState.style.display = 'block';
-            mainContent.style.display = 'none';
-            for (let i = 1; i <= MAX_SLOTS; i++) {
-              slots[i] = { claimed: 0, team: 0, ready: 0 };
-            }
-            stopSyncLoop();
-            debug('Auto-reset after game start');
-          }, 3000);
+            resetState();
+            debug('Game started - reset');
+          }, 2000);
         }
       }, 1000);
+
+      render();
     }
 
     // ===========================================
-    // Sync System
+    // Message handler - SIMPLIFIED
     // ===========================================
-
-    function requestSync() {
-      if (mySlot === 0) return;
-      sendTaskUpdate('request_sync', 'SetNotActiveToActive');
-    }
-
-    function startSyncLoop() {
-      if (syncTimer) clearInterval(syncTimer);
-      syncTimer = setInterval(requestSync, SYNC_INTERVAL);
-      // Also request immediately
-      requestSync();
-    }
-
-    function stopSyncLoop() {
-      if (syncTimer) {
-        clearInterval(syncTimer);
-        syncTimer = null;
+    function handleMessage(message) {
+      let msgStr = message;
+      if (typeof message !== 'string') {
+        try { msgStr = JSON.stringify(message); } catch(e) { msgStr = String(message); }
       }
-    }
 
-    // ===========================================
-    // Portals SDK Integration
-    // ===========================================
+      console.log('[TS v33] Received:', msgStr);
 
-    function sendTaskUpdate(taskName, taskState) {
-      if (typeof PortalsSdk === 'undefined') {
-        console.log('[TeamSelect] SDK not available, would send:', taskName, taskState);
+      // ===== GAME STATUS =====
+      // If game is in progress, show waiting message
+      if (msgStr.startsWith('game_status_')) {
+        const status = parseInt(msgStr.substring(12)) || 0;
+        debug('Game status: ' + status);
+        if (status === 1) {
+          loadingState.innerHTML = `
+            <div class="loading-text" style="font-size:18px;color:#fbbf24;">GAME IN PROGRESS</div>
+            <div class="loading-text" style="margin-top:15px;font-size:11px;opacity:0.5;">Please wait for current match to end</div>
+          `;
+          loadingState.style.display = 'block';
+          mainContent.style.display = 'none';
+        }
         return;
       }
 
-      try {
-        PortalsSdk.sendMessageToUnity(JSON.stringify({
-          TaskName: taskName,
-          TaskTargetState: taskState
-        }));
-        debug('Sent: ' + taskName);
-      } catch (e) {
-        console.error('[TeamSelect] Failed to send task:', e);
-      }
-    }
-
-    function handleMessage(message) {
-      console.log('[TeamSelect] Received:', message);
-
-      let msg = message;
-      if (typeof message === 'string') {
-        try {
-          msg = JSON.parse(message);
-        } catch (e) {
-          msg = message;
-        }
-      }
-
-      const msgStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
-
-      // Debug ALL received messages
-      debug('Recv: ' + msgStr.substring(0, 40));
-
-      // Message formats:
-      // my_slot_X               - Slot X assigned to this player (1-8)
-      // sync_C1_T1_R1_C2_T2_R2... - Full slot sync (C=claimed, T=team, R=ready)
-      // slot_claimed            - Slot claim succeeded
-      // slot_failed             - Slot claim failed (lobby full)
-      // countdown_3             - Start countdown
-      // start                   - Game starting
-      // reset                   - Reset lobby
-
+      // ===== MY SLOT ASSIGNMENT =====
+      // This is the PRIMARY trigger - when we get a slot, show the UI
       if (msgStr.startsWith('my_slot_')) {
-        mySlot = parseInt(msgStr.substring(8)) || 0;
-        debug('Assigned slot: ' + mySlot);
+        const newSlot = parseInt(msgStr.substring(8)) || 0;
+        debug('Got slot: ' + newSlot);
 
-        // Always reset countdown state when receiving new slot (handles stale iframe)
-        gameStarting = false;
-        countdownOverlay.classList.remove('show');
-        myTeam = 0;
-        myReady = false;
-        allReadySent = false;
-        startGameSent = false;
+        // Don't show UI if a game is already in progress
+        if (gameInProgress) {
+          debug('Ignoring slot - game in progress');
+          return;
+        }
 
-        if (mySlot > 0) {
-          // Show main content, hide loading
+        if (newSlot > 0) {
+          // Reset state for fresh start (handles re-entry)
+          resetState();
+
+          // Set our slot
+          mySlot = newSlot;
+          slots[mySlot].claimed = 1;
+
+          // Show UI
           loadingState.style.display = 'none';
           mainContent.style.display = 'block';
           subtitleText.textContent = 'You are Player ' + mySlot;
 
-          // Start sync loop to get lobby state
-          startSyncLoop();
+          render();
+          debug('UI shown for slot ' + mySlot);
         }
+        return;
       }
-      else if (msgStr.startsWith('lobbysync_')) {
-        if (parseSlotSync(msgStr)) {
-          updateMyStateFromSync();
+
+      // ===== LOBBY SYNC =====
+      // Updates the player list
+      if (msgStr.startsWith('lobbysync_')) {
+        debug('Got sync');
+        if (parseSync(msgStr)) {
           render();
         }
+        return;
       }
-      else if (msgStr === 'slot_claimed') {
-        debug('Slot claimed successfully');
+
+      // ===== COUNTDOWN =====
+      if (msgStr.startsWith('countdown_')) {
+        const secs = parseInt(msgStr.substring(10)) || 3;
+        startCountdown(secs);
+        return;
       }
-      else if (msgStr === 'slot_failed') {
-        debug('Slot claim failed');
-        loadingState.style.display = 'none';
-        mainContent.style.display = 'block';
-        statusText.textContent = 'Lobby full - try again later';
-        statusText.className = 'status-text error';
-      }
-      else if (msgStr.startsWith('countdown_')) {
-        const seconds = parseInt(msgStr.substring(10)) || 3;
-        stopSyncLoop();
-        startCountdown(seconds);
-      }
-      else if (msgStr === 'start') {
-        stopSyncLoop();
+      if (msgStr === 'start') {
         startCountdown(3);
+        return;
       }
-      else if (msgStr === 'reset') {
-        // Full reset
-        for (let i = 1; i <= MAX_SLOTS; i++) {
-          slots[i] = { claimed: 0, team: 0, ready: 0 };
-        }
-        mySlot = 0;
-        myTeam = 0;
-        myReady = false;
-        gameStarting = false;
-        allReadySent = false;
-        startGameSent = false;
-        if (countdownInterval) {
-          clearInterval(countdownInterval);
-          countdownInterval = null;
-        }
-        countdownOverlay.classList.remove('show');
+
+      // ===== RESET =====
+      if (msgStr === 'reset') {
+        gameInProgress = false;
+        resetState();
+        debug('Reset received');
+        return;
+      }
+
+      // ===== EXIT LOBBY =====
+      // Player left the trigger zone
+      if (msgStr === 'exit_lobby') {
+        resetState();
+        debug('Exited lobby');
+        return;
+      }
+
+      // ===== LEGACY MESSAGES (ignored) =====
+      // These are handled by Portals directly now
+      if (msgStr === 'reset_teamselect' || msgStr === 'enter_lobby') {
+        debug('Ignored: ' + msgStr + ' (waiting for my_slot_X)');
+        return;
+      }
+
+      // ===== SYNC MESSAGE (from active game) =====
+      // If we receive sync_, a game is in progress
+      if (msgStr.startsWith('sync_')) {
+        gameInProgress = true;
+        debug('Game active - sync received');
+        loadingState.innerHTML = `
+          <div class="loading-text" style="font-size:18px;color:#fbbf24;">GAME IN PROGRESS</div>
+          <div class="loading-text" style="margin-top:15px;font-size:11px;opacity:0.5;">Please wait for current match to end</div>
+        `;
         loadingState.style.display = 'block';
         mainContent.style.display = 'none';
-
-        // Re-request slot assignment after reset
-        setTimeout(() => {
-          if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
-            PortalsSdk.sendMessageToUnity(JSON.stringify({
-              TaskName: 'team_select_ready',
-              TaskTargetState: 'SetNotActiveToCompleted'
-            }));
-            console.log('[TeamSelect] Re-requested slot after reset');
-          }
-        }, 500);
+        return;
       }
+
+      // Ignore time updates and other messages
+      if (msgStr.startsWith('time_')) return;
+
+      debug('Unknown: ' + msgStr.substring(0, 30));
     }
 
     // ===========================================
     // Initialize
     // ===========================================
-
-    // Set up message listener
     if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
       PortalsSdk.setMessageListener(handleMessage);
-      console.log('[TeamSelect] SDK listener registered');
+      debug('SDK ready');
     } else {
       window.addEventListener('message', (e) => handleMessage(e.data));
-      console.log('[TeamSelect] Using fallback listener');
+      debug('Fallback listener');
     }
 
-    // Notify Portals that team select is ready and request slot assignment
-    // Portals will respond with my_slot_X message after running claim_slot
-    if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
-      PortalsSdk.sendMessageToUnity(JSON.stringify({
-        TaskName: 'team_select_ready',
-        TaskTargetState: 'SetNotActiveToCompleted'
-      }));
-    }
-
-    console.log('[TeamSelect] Initialized - waiting for slot assignment');
+    console.log('[TS v33] Initialized - waiting for my_slot_X from Portals');
   </script>
 </body>
 </html>
