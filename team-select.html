@@ -938,7 +938,7 @@
     function sendTeamSelectReady() {
       if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
         PortalsSdk.sendMessageToUnity(JSON.stringify({
-          TaskName: 'teamselect_ready',
+          TaskName: 'team_select_ready',
           TaskTargetState: 'SetNotActiveToCompleted'
         }));
         debug('Sent teamselect_ready');
