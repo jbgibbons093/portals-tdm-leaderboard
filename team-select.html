@@ -934,9 +934,25 @@
       debug('Unknown: ' + msgStr.substring(0, 30));
     }
 
+    // Function to notify Portals that team select is ready
+    function sendTeamSelectReady() {
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
+        PortalsSdk.sendMessageToUnity(JSON.stringify({
+          TaskName: 'teamselect_ready',
+          TaskTargetState: 'SetNotActiveToCompleted'
+        }));
+        debug('Sent teamselect_ready');
+      }
+    }
+
     if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
       PortalsSdk.setMessageListener(handleMessage);
       debug('SDK ready');
+
+      // Notify Portals we're ready after a short delay to ensure connection
+      setTimeout(() => {
+        sendTeamSelectReady();
+      }, 300);
     } else {
       window.addEventListener('message', (e) => handleMessage(e.data));
       debug('Fallback listener');
