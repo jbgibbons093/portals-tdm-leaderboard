@@ -9,7 +9,7 @@
   <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005502"></script>
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap');
 
     * {
       margin: 0;
@@ -20,7 +20,7 @@
     html, body {
       width: 100%;
       height: 100%;
-      font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+      font-family: 'Rajdhani', sans-serif;
       background: transparent;
       overflow: hidden;
     }
@@ -34,9 +34,10 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: radial-gradient(ellipse at center, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.95) 100%);
+      background: radial-gradient(ellipse at center, rgba(0,15,25,0.92) 0%, rgba(0,5,15,0.98) 100%);
     }
 
+    /* Grid pattern overlay */
     .overlay::before {
       content: '';
       position: absolute;
@@ -44,72 +45,203 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 3px);
+      background:
+        linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
       pointer-events: none;
-      z-index: 10;
+      z-index: 1;
+    }
+
+    /* Animated scan line */
+    .overlay::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(0,212,255,0.3) 40%,
+        rgba(0,212,255,0.6) 50%,
+        rgba(0,212,255,0.3) 60%,
+        transparent 100%
+      );
+      animation: scanVertical 4s linear infinite;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    @keyframes scanVertical {
+      0% { top: -4px; }
+      100% { top: 100%; }
     }
 
     .team-select-container {
       position: relative;
-      background: linear-gradient(180deg, rgba(10,10,20,0.95) 0%, rgba(20,20,35,0.98) 100%);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 12px;
-      padding: 30px 40px;
-      min-width: 700px;
-      max-width: 900px;
-      box-shadow: 0 0 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+      background: linear-gradient(180deg, rgba(0,20,35,0.98) 0%, rgba(0,10,25,0.99) 100%);
+      padding: 35px 45px;
+      min-width: 750px;
+      max-width: 950px;
+      z-index: 10;
+      clip-path: polygon(
+        30px 0, calc(100% - 30px) 0,
+        100% 30px, 100% calc(100% - 15px),
+        calc(100% - 15px) 100%, 15px 100%,
+        0 calc(100% - 15px), 0 30px
+      );
     }
+
+    /* Outer glow frame */
+    .team-select-container::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(135deg,
+        rgba(0,212,255,0.7) 0%,
+        rgba(0,212,255,0.15) 25%,
+        rgba(0,212,255,0.15) 75%,
+        rgba(0,212,255,0.7) 100%
+      );
+      clip-path: polygon(
+        30px 0, calc(100% - 30px) 0,
+        100% 30px, 100% calc(100% - 15px),
+        calc(100% - 15px) 100%, 15px 100%,
+        0 calc(100% - 15px), 0 30px
+      );
+      z-index: -1;
+      animation: framePulse 3s ease-in-out infinite;
+    }
+
+    @keyframes framePulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    /* Inner scan effect */
+    .team-select-container::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg,
+        rgba(0,212,255,0.08) 0%,
+        transparent 20%,
+        transparent 80%,
+        rgba(0,212,255,0.08) 100%
+      );
+      pointer-events: none;
+    }
+
+    /* Corner decorations */
+    .corner-bracket {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-color: rgba(0,212,255,0.6);
+      border-style: solid;
+      pointer-events: none;
+    }
+
+    .corner-bracket.tl { top: 10px; left: 10px; border-width: 2px 0 0 2px; }
+    .corner-bracket.tr { top: 10px; right: 10px; border-width: 2px 2px 0 0; }
+    .corner-bracket.bl { bottom: 10px; left: 10px; border-width: 0 0 2px 2px; }
+    .corner-bracket.br { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; }
 
     .header {
       text-align: center;
       margin-bottom: 30px;
       padding-bottom: 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid rgba(0,212,255,0.2);
+      position: relative;
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(0,212,255,0.8), transparent);
     }
 
     .title {
       font-family: 'Orbitron', sans-serif;
-      font-size: 32px;
-      font-weight: 700;
-      color: #ffffff;
+      font-size: 28px;
+      font-weight: 900;
+      color: #00d4ff;
       text-transform: uppercase;
-      letter-spacing: 8px;
-      text-shadow: 0 0 20px rgba(255,255,255,0.3);
+      letter-spacing: 12px;
+      text-shadow: 0 0 30px rgba(0,212,255,0.5);
     }
 
     .subtitle {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 14px;
-      color: rgba(255,255,255,0.4);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      color: rgba(0,212,255,0.6);
       text-transform: uppercase;
-      letter-spacing: 4px;
-      margin-top: 8px;
+      letter-spacing: 6px;
+      margin-top: 10px;
     }
 
     .teams-wrapper {
       display: flex;
-      gap: 30px;
-      margin-bottom: 30px;
+      gap: 25px;
+      margin-bottom: 25px;
     }
 
     .team-column {
       flex: 1;
-      background: rgba(0,0,0,0.3);
-      border-radius: 10px;
+      background: rgba(0,0,0,0.4);
       padding: 20px;
-      min-height: 280px;
+      min-height: 260px;
       display: flex;
       flex-direction: column;
+      position: relative;
+      clip-path: polygon(
+        15px 0, calc(100% - 15px) 0,
+        100% 15px, 100% 100%,
+        0 100%, 0 15px
+      );
+    }
+
+    .team-column::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: -1px;
+      right: -1px;
+      bottom: -1px;
+      clip-path: polygon(
+        15px 0, calc(100% - 15px) 0,
+        100% 15px, 100% 100%,
+        0 100%, 0 15px
+      );
+      z-index: -1;
+    }
+
+    .team-column.red::before {
+      background: linear-gradient(180deg, rgba(255,68,68,0.5) 0%, rgba(255,68,68,0.15) 100%);
+    }
+
+    .team-column.blue::before {
+      background: linear-gradient(180deg, rgba(68,136,255,0.5) 0%, rgba(68,136,255,0.15) 100%);
     }
 
     .team-column.red {
-      border: 2px solid rgba(239,68,68,0.4);
-      box-shadow: inset 0 0 30px rgba(239,68,68,0.1);
+      background: linear-gradient(180deg, rgba(255,50,50,0.15) 0%, rgba(100,20,20,0.2) 100%);
     }
 
     .team-column.blue {
-      border: 2px solid rgba(59,130,246,0.4);
-      box-shadow: inset 0 0 30px rgba(59,130,246,0.1);
+      background: linear-gradient(180deg, rgba(50,100,255,0.15) 0%, rgba(20,50,100,0.2) 100%);
     }
 
     .team-header {
@@ -123,19 +255,26 @@
 
     .team-name {
       font-family: 'Orbitron', sans-serif;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 4px;
     }
 
-    .team-name.red { color: #ef4444; text-shadow: 0 0 15px rgba(239,68,68,0.5); }
-    .team-name.blue { color: #3b82f6; text-shadow: 0 0 15px rgba(59,130,246,0.5); }
+    .team-name.red {
+      color: #ff4444;
+      text-shadow: 0 0 15px rgba(255,68,68,0.6);
+    }
+    .team-name.blue {
+      color: #4488ff;
+      text-shadow: 0 0 15px rgba(68,136,255,0.6);
+    }
 
     .team-count {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Share Tech Mono', monospace;
       font-size: 14px;
-      color: rgba(255,255,255,0.5);
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 2px;
     }
 
     .player-list {
@@ -148,79 +287,81 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 12px;
+      padding: 10px 14px;
       background: rgba(255,255,255,0.03);
-      border-radius: 6px;
       margin-bottom: 6px;
+      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+      border-left: 2px solid rgba(255,255,255,0.1);
     }
 
     .player-item.is-me {
-      background: rgba(168,85,247,0.2);
-      border: 1px solid rgba(168,85,247,0.4);
+      background: rgba(0,212,255,0.15);
+      border-left: 2px solid rgba(0,212,255,0.6);
     }
 
     .player-name {
       font-family: 'Rajdhani', sans-serif;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
       color: #ffffff;
-    }
-
-    .player-status {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 10px;
-      padding: 3px 8px;
-      border-radius: 4px;
-      text-transform: uppercase;
       letter-spacing: 1px;
     }
 
+    .player-status {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      padding: 4px 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
+    }
+
     .player-status.ready {
-      background: rgba(74,222,128,0.2);
+      background: rgba(74,222,128,0.25);
       color: #4ade80;
       border: 1px solid rgba(74,222,128,0.4);
     }
 
     .player-status.not-ready {
-      background: rgba(251,191,36,0.2);
-      color: #fbbf24;
-      border: 1px solid rgba(251,191,36,0.4);
+      background: rgba(255,170,0,0.2);
+      color: #ffaa00;
+      border: 1px solid rgba(255,170,0,0.3);
     }
 
     .join-btn {
       width: 100%;
-      padding: 12px;
+      padding: 14px;
       font-family: 'Orbitron', sans-serif;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
       border: none;
-      border-radius: 6px;
       cursor: pointer;
       transition: all 0.2s ease;
+      clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
     }
 
     .join-btn.red {
-      background: linear-gradient(180deg, rgba(239,68,68,0.3) 0%, rgba(185,28,28,0.4) 100%);
-      color: #fca5a5;
-      border: 1px solid rgba(239,68,68,0.5);
+      background: linear-gradient(180deg, rgba(255,68,68,0.4) 0%, rgba(180,30,30,0.5) 100%);
+      color: #ff6b6b;
+      border: 1px solid rgba(255,68,68,0.5);
     }
 
     .join-btn.red:hover:not(:disabled) {
-      background: linear-gradient(180deg, rgba(239,68,68,0.5) 0%, rgba(185,28,28,0.6) 100%);
-      box-shadow: 0 0 20px rgba(239,68,68,0.4);
+      background: linear-gradient(180deg, rgba(255,68,68,0.6) 0%, rgba(200,40,40,0.7) 100%);
+      box-shadow: 0 0 25px rgba(255,68,68,0.5), inset 0 0 20px rgba(255,68,68,0.2);
     }
 
     .join-btn.blue {
-      background: linear-gradient(180deg, rgba(59,130,246,0.3) 0%, rgba(29,78,216,0.4) 100%);
-      color: #93c5fd;
-      border: 1px solid rgba(59,130,246,0.5);
+      background: linear-gradient(180deg, rgba(68,136,255,0.4) 0%, rgba(30,80,180,0.5) 100%);
+      color: #6bb3ff;
+      border: 1px solid rgba(68,136,255,0.5);
     }
 
     .join-btn.blue:hover:not(:disabled) {
-      background: linear-gradient(180deg, rgba(59,130,246,0.5) 0%, rgba(29,78,216,0.6) 100%);
-      box-shadow: 0 0 20px rgba(59,130,246,0.4);
+      background: linear-gradient(180deg, rgba(68,136,255,0.6) 0%, rgba(40,100,200,0.7) 100%);
+      box-shadow: 0 0 25px rgba(68,136,255,0.5), inset 0 0 20px rgba(68,136,255,0.2);
     }
 
     .join-btn:disabled {
@@ -229,47 +370,54 @@
     }
 
     .join-btn.joined {
-      background: rgba(255,255,255,0.1);
-      color: rgba(255,255,255,0.5);
-      border-color: rgba(255,255,255,0.2);
+      background: rgba(0,212,255,0.15);
+      color: rgba(0,212,255,0.7);
+      border-color: rgba(0,212,255,0.3);
     }
 
     .actions {
       display: flex;
       gap: 20px;
       padding-top: 20px;
-      border-top: 1px solid rgba(255,255,255,0.1);
+      border-top: 1px solid rgba(0,212,255,0.15);
     }
 
     .ready-btn {
       flex: 1;
-      padding: 16px 30px;
+      padding: 18px 35px;
       font-family: 'Orbitron', sans-serif;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 3px;
+      letter-spacing: 4px;
       border: none;
-      border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s ease;
+      clip-path: polygon(15px 0, 100% 0, calc(100% - 15px) 100%, 0 100%);
+      position: relative;
     }
 
     .ready-btn.not-ready {
-      background: linear-gradient(180deg, rgba(74,222,128,0.3) 0%, rgba(34,197,94,0.4) 100%);
+      background: linear-gradient(180deg, rgba(74,222,128,0.35) 0%, rgba(34,180,80,0.45) 100%);
       color: #4ade80;
       border: 2px solid rgba(74,222,128,0.5);
     }
 
     .ready-btn.not-ready:hover:not(:disabled) {
-      background: linear-gradient(180deg, rgba(74,222,128,0.5) 0%, rgba(34,197,94,0.6) 100%);
-      box-shadow: 0 0 25px rgba(74,222,128,0.4);
+      background: linear-gradient(180deg, rgba(74,222,128,0.5) 0%, rgba(34,200,90,0.6) 100%);
+      box-shadow: 0 0 30px rgba(74,222,128,0.5), inset 0 0 25px rgba(74,222,128,0.2);
     }
 
     .ready-btn.is-ready {
-      background: linear-gradient(180deg, rgba(239,68,68,0.3) 0%, rgba(185,28,28,0.4) 100%);
-      color: #fca5a5;
-      border: 2px solid rgba(239,68,68,0.5);
+      background: linear-gradient(180deg, rgba(255,68,68,0.35) 0%, rgba(180,30,30,0.45) 100%);
+      color: #ff6b6b;
+      border: 2px solid rgba(255,68,68,0.5);
+      animation: readyPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes readyPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(74,222,128,0.3); }
+      50% { box-shadow: 0 0 35px rgba(74,222,128,0.6); }
     }
 
     .ready-btn:disabled {
@@ -283,20 +431,21 @@
     }
 
     .status-text {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 16px;
-      color: rgba(255,255,255,0.6);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
       text-transform: uppercase;
-      letter-spacing: 3px;
+      letter-spacing: 4px;
     }
 
     .status-text.all-ready {
       color: #4ade80;
-      animation: pulse 1.5s ease-in-out infinite;
+      text-shadow: 0 0 15px rgba(74,222,128,0.6);
+      animation: statusPulse 1.5s ease-in-out infinite;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 0.8; }
+    @keyframes statusPulse {
+      0%, 100% { opacity: 0.7; }
       50% { opacity: 1; }
     }
 
@@ -306,24 +455,47 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,10,20,0.95);
       display: none;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      border-radius: 12px;
-      z-index: 20;
+      z-index: 50;
+      clip-path: polygon(
+        30px 0, calc(100% - 30px) 0,
+        100% 30px, 100% calc(100% - 15px),
+        calc(100% - 15px) 100%, 15px 100%,
+        0 calc(100% - 15px), 0 30px
+      );
     }
 
     .countdown-overlay.show {
       display: flex;
     }
 
+    .countdown-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      color: rgba(0,212,255,0.7);
+      text-transform: uppercase;
+      letter-spacing: 8px;
+      margin-bottom: 10px;
+    }
+
     .countdown-number {
       font-family: 'Orbitron', sans-serif;
-      font-size: 120px;
+      font-size: 140px;
       font-weight: 900;
-      color: #ffffff;
-      text-shadow: 0 0 60px rgba(255,255,255,0.5);
+      color: #00d4ff;
+      text-shadow:
+        0 0 40px rgba(0,212,255,0.8),
+        0 0 80px rgba(0,212,255,0.4);
+      animation: countPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes countPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
     }
 
     .empty-team {
@@ -331,26 +503,26 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: rgba(255,255,255,0.3);
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 14px;
+      color: rgba(255,255,255,0.25);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
     }
 
     .loading-state {
       text-align: center;
-      padding: 40px;
+      padding: 50px;
     }
 
     .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(255,255,255,0.1);
-      border-top-color: rgba(255,255,255,0.7);
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(0,212,255,0.15);
+      border-top-color: rgba(0,212,255,0.8);
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin: 0 auto 15px;
+      margin: 0 auto 20px;
     }
 
     @keyframes spin {
@@ -360,41 +532,48 @@
     .loading-text {
       font-family: 'Orbitron', sans-serif;
       font-size: 12px;
-      color: rgba(255,255,255,0.5);
+      color: rgba(0,212,255,0.6);
       text-transform: uppercase;
-      letter-spacing: 3px;
+      letter-spacing: 4px;
     }
 
     #debug {
       position: fixed;
       bottom: 10px;
       left: 10px;
-      background: rgba(0,0,0,0.9);
-      color: lime;
-      padding: 8px 12px;
+      background: rgba(0,20,30,0.9);
+      color: #00d4ff;
+      padding: 6px 12px;
       font-size: 11px;
-      font-family: monospace;
+      font-family: 'Share Tech Mono', monospace;
       z-index: 999;
       max-width: 500px;
-      border-radius: 4px;
+      border: 1px solid rgba(0,212,255,0.3);
+      clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
     }
   </style>
 </head>
 <body>
   <div class="overlay">
     <div class="team-select-container">
+      <div class="corner-bracket tl"></div>
+      <div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div>
+      <div class="corner-bracket br"></div>
+
       <div class="countdown-overlay" id="countdownOverlay">
+        <div class="countdown-label">Deploying In</div>
         <div class="countdown-number" id="countdownNumber">3</div>
       </div>
 
       <div class="header">
         <div class="title">Select Team</div>
-        <div class="subtitle" id="subtitleText">Choose your side</div>
+        <div class="subtitle" id="subtitleText">// Choose Your Side</div>
       </div>
 
       <div class="loading-state" id="loadingState">
         <div class="loading-spinner"></div>
-        <div class="loading-text">Joining lobby...</div>
+        <div class="loading-text">Connecting...</div>
       </div>
 
       <div id="mainContent" style="display: none;">
@@ -405,7 +584,7 @@
               <span class="team-count" id="redCount">0/4</span>
             </div>
             <div class="player-list" id="redPlayerList">
-              <div class="empty-team">No players</div>
+              <div class="empty-team">// Awaiting Spartans</div>
             </div>
             <button class="join-btn red" id="joinRedBtn">Join Red</button>
           </div>
@@ -416,7 +595,7 @@
               <span class="team-count" id="blueCount">0/4</span>
             </div>
             <div class="player-list" id="bluePlayerList">
-              <div class="empty-team">No players</div>
+              <div class="empty-team">// Awaiting Spartans</div>
             </div>
             <button class="join-btn blue" id="joinBlueBtn">Join Blue</button>
           </div>
@@ -427,39 +606,34 @@
         </div>
 
         <div class="status-bar">
-          <div class="status-text" id="statusText">Waiting for players...</div>
+          <div class="status-text" id="statusText">// Waiting for players</div>
         </div>
       </div>
     </div>
   </div>
 
-  <div id="debug">v34 Loading...</div>
+  <div id="debug">SPARTAN LOBBY v2.0</div>
 
   <script>
     // ===========================================
-    // Team Selection for Portals TDM - v34
-    // SIMPLIFIED: Only responds to my_slot_X and lobbysync_
-    // Blocks matchmaking if game is in progress (sync_ detected)
+    // Team Selection for Portals TDM - v35 HALO
     // ===========================================
 
     const MAX_SLOTS = 8;
     const MAX_PER_TEAM = 4;
 
-    // Core state
-    let mySlot = 0;      // 1-8, or 0 if not assigned
-    let myTeam = 0;      // 0=none, 1=red, 2=blue
+    let mySlot = 0;
+    let myTeam = 0;
     let myReady = false;
     let gameStarting = false;
     let allReadySent = false;
-    let gameInProgress = false;  // True if we detect an active game
+    let gameInProgress = false;
 
-    // Slot data: { 1: {claimed, team, ready}, ... }
     const slots = {};
     for (let i = 1; i <= MAX_SLOTS; i++) {
       slots[i] = { claimed: 0, team: 0, ready: 0 };
     }
 
-    // DOM
     const loadingState = document.getElementById('loadingState');
     const mainContent = document.getElementById('mainContent');
     const redPlayerList = document.getElementById('redPlayerList');
@@ -475,17 +649,11 @@
     const countdownNumber = document.getElementById('countdownNumber');
     const debugEl = document.getElementById('debug');
 
-    // ===========================================
-    // Debug
-    // ===========================================
     function debug(msg) {
-      console.log('[TS v33]', msg);
-      debugEl.textContent = 'v33 | slot:' + mySlot + ' team:' + myTeam + ' | ' + msg;
+      console.log('[TS v35]', msg);
+      debugEl.textContent = 'v35 | slot:' + mySlot + ' team:' + myTeam + ' | ' + msg;
     }
 
-    // ===========================================
-    // Send task to Portals
-    // ===========================================
     function sendTask(taskName, state) {
       if (typeof PortalsSdk === 'undefined' || !PortalsSdk.sendMessageToUnity) {
         console.log('[TS] No SDK, would send:', taskName);
@@ -498,9 +666,6 @@
       debug('Sent: ' + taskName);
     }
 
-    // ===========================================
-    // Reset all state
-    // ===========================================
     function resetState() {
       mySlot = 0;
       myTeam = 0;
@@ -511,19 +676,17 @@
         slots[i] = { claimed: 0, team: 0, ready: 0 };
       }
       countdownOverlay.classList.remove('show');
+      loadingState.innerHTML = `
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Connecting...</div>
+      `;
       loadingState.style.display = 'block';
       mainContent.style.display = 'none';
     }
 
-    // ===========================================
-    // Parse lobbysync message
-    // ===========================================
     function parseSync(msgStr) {
-      // Format: lobbysync_C1_T1_R1_C2_T2_R2_...
       if (!msgStr.startsWith('lobbysync_')) return false;
-
       const parts = msgStr.substring(10).split('_');
-
       for (let i = 0; i < MAX_SLOTS; i++) {
         const idx = i * 3;
         if (idx + 2 < parts.length) {
@@ -534,19 +697,13 @@
           };
         }
       }
-
-      // Update my state from my slot
       if (mySlot > 0 && slots[mySlot]) {
         myTeam = slots[mySlot].team;
         myReady = slots[mySlot].ready === 1;
       }
-
       return true;
     }
 
-    // ===========================================
-    // Rendering
-    // ===========================================
     function getPlayersOnTeam(teamNum) {
       return Object.entries(slots)
         .filter(([_, d]) => d.claimed === 1 && d.team === teamNum)
@@ -559,45 +716,41 @@
       const redPlayers = getPlayersOnTeam(1);
       const bluePlayers = getPlayersOnTeam(2);
 
-      // Red team list
       redPlayerList.innerHTML = redPlayers.length === 0
-        ? '<div class="empty-team">No players</div>'
+        ? '<div class="empty-team">// Awaiting Spartans</div>'
         : redPlayers.map(p => `
             <div class="player-item ${p.slot === mySlot ? 'is-me' : ''}">
-              <span class="player-name">Player ${p.slot}${p.slot === mySlot ? ' (You)' : ''}</span>
-              <span class="player-status ${p.ready ? 'ready' : 'not-ready'}">${p.ready ? 'Ready' : 'Waiting'}</span>
+              <span class="player-name">SPARTAN-${p.slot.toString().padStart(2, '0')}${p.slot === mySlot ? ' (You)' : ''}</span>
+              <span class="player-status ${p.ready ? 'ready' : 'not-ready'}">${p.ready ? 'Ready' : 'Standby'}</span>
             </div>
           `).join('');
       redCount.textContent = redPlayers.length + '/' + MAX_PER_TEAM;
 
-      // Blue team list
       bluePlayerList.innerHTML = bluePlayers.length === 0
-        ? '<div class="empty-team">No players</div>'
+        ? '<div class="empty-team">// Awaiting Spartans</div>'
         : bluePlayers.map(p => `
             <div class="player-item ${p.slot === mySlot ? 'is-me' : ''}">
-              <span class="player-name">Player ${p.slot}${p.slot === mySlot ? ' (You)' : ''}</span>
-              <span class="player-status ${p.ready ? 'ready' : 'not-ready'}">${p.ready ? 'Ready' : 'Waiting'}</span>
+              <span class="player-name">SPARTAN-${p.slot.toString().padStart(2, '0')}${p.slot === mySlot ? ' (You)' : ''}</span>
+              <span class="player-status ${p.ready ? 'ready' : 'not-ready'}">${p.ready ? 'Ready' : 'Standby'}</span>
             </div>
           `).join('');
       blueCount.textContent = bluePlayers.length + '/' + MAX_PER_TEAM;
 
-      // Join buttons
       joinRedBtn.disabled = myReady || myTeam === 1 || redPlayers.length >= MAX_PER_TEAM;
-      joinRedBtn.textContent = myTeam === 1 ? 'Joined' : (redPlayers.length >= MAX_PER_TEAM ? 'Full' : 'Join Red');
+      joinRedBtn.textContent = myTeam === 1 ? 'Deployed' : (redPlayers.length >= MAX_PER_TEAM ? 'Full' : 'Join Red');
       joinRedBtn.classList.toggle('joined', myTeam === 1);
 
       joinBlueBtn.disabled = myReady || myTeam === 2 || bluePlayers.length >= MAX_PER_TEAM;
-      joinBlueBtn.textContent = myTeam === 2 ? 'Joined' : (bluePlayers.length >= MAX_PER_TEAM ? 'Full' : 'Join Blue');
+      joinBlueBtn.textContent = myTeam === 2 ? 'Deployed' : (bluePlayers.length >= MAX_PER_TEAM ? 'Full' : 'Join Blue');
       joinBlueBtn.classList.toggle('joined', myTeam === 2);
 
-      // Ready button
       if (myTeam === 0) {
         readyBtn.disabled = true;
         readyBtn.textContent = 'Select a Team';
         readyBtn.className = 'ready-btn not-ready';
       } else if (gameStarting) {
         readyBtn.disabled = true;
-        readyBtn.textContent = 'Starting...';
+        readyBtn.textContent = 'Deploying...';
         readyBtn.className = 'ready-btn not-ready';
       } else {
         readyBtn.disabled = false;
@@ -605,34 +758,30 @@
         readyBtn.className = myReady ? 'ready-btn is-ready' : 'ready-btn not-ready';
       }
 
-      // Status
       const allWithTeam = Object.values(slots).filter(s => s.claimed && s.team > 0);
       const allReady = allWithTeam.filter(s => s.ready);
 
       if (allWithTeam.length === 0) {
-        statusText.textContent = 'Waiting for players...';
+        statusText.textContent = '// Waiting for players';
         statusText.className = 'status-text';
       } else if (redPlayers.length === 0 || bluePlayers.length === 0) {
-        statusText.textContent = 'Need players on both teams';
+        statusText.textContent = '// Need players on both teams';
         statusText.className = 'status-text';
       } else if (allReady.length === allWithTeam.length && allWithTeam.length >= 2) {
-        statusText.textContent = 'All players ready!';
+        statusText.textContent = '// All Spartans Ready';
         statusText.className = 'status-text all-ready';
         if (!allReadySent) {
           allReadySent = true;
           sendTask('all_players_ready');
         }
       } else {
-        statusText.textContent = allReady.length + '/' + allWithTeam.length + ' players ready';
+        statusText.textContent = '// ' + allReady.length + '/' + allWithTeam.length + ' players ready';
         statusText.className = 'status-text';
       }
 
       debug('Rendered: red=' + redPlayers.length + ' blue=' + bluePlayers.length);
     }
 
-    // ===========================================
-    // Button handlers
-    // ===========================================
     joinRedBtn.addEventListener('click', () => {
       if (myReady || myTeam === 1 || mySlot === 0) return;
       myTeam = 1;
@@ -663,9 +812,6 @@
       render();
     });
 
-    // ===========================================
-    // Countdown
-    // ===========================================
     function startCountdown(seconds) {
       if (gameStarting) return;
       gameStarting = true;
@@ -691,26 +837,21 @@
       render();
     }
 
-    // ===========================================
-    // Message handler - SIMPLIFIED
-    // ===========================================
     function handleMessage(message) {
       let msgStr = message;
       if (typeof message !== 'string') {
         try { msgStr = JSON.stringify(message); } catch(e) { msgStr = String(message); }
       }
 
-      console.log('[TS v33] Received:', msgStr);
+      console.log('[TS v35] Received:', msgStr);
 
-      // ===== GAME STATUS =====
-      // If game is in progress, show waiting message
       if (msgStr.startsWith('game_status_')) {
         const status = parseInt(msgStr.substring(12)) || 0;
         debug('Game status: ' + status);
         if (status === 1) {
           loadingState.innerHTML = `
-            <div class="loading-text" style="font-size:18px;color:#fbbf24;">GAME IN PROGRESS</div>
-            <div class="loading-text" style="margin-top:15px;font-size:11px;opacity:0.5;">Please wait for current match to end</div>
+            <div class="loading-text" style="font-size:16px;color:#ffaa00;letter-spacing:6px;">MATCH IN PROGRESS</div>
+            <div class="loading-text" style="margin-top:15px;font-size:11px;opacity:0.5;">// Standby for deployment</div>
           `;
           loadingState.style.display = 'block';
           mainContent.style.display = 'none';
@@ -718,39 +859,28 @@
         return;
       }
 
-      // ===== MY SLOT ASSIGNMENT =====
-      // This is the PRIMARY trigger - when we get a slot, show the UI
       if (msgStr.startsWith('my_slot_')) {
         const newSlot = parseInt(msgStr.substring(8)) || 0;
         debug('Got slot: ' + newSlot);
 
-        // Don't show UI if a game is already in progress
         if (gameInProgress) {
           debug('Ignoring slot - game in progress');
           return;
         }
 
         if (newSlot > 0) {
-          // Reset state for fresh start (handles re-entry)
           resetState();
-
-          // Set our slot
           mySlot = newSlot;
           slots[mySlot].claimed = 1;
-
-          // Show UI
           loadingState.style.display = 'none';
           mainContent.style.display = 'block';
-          subtitleText.textContent = 'You are Player ' + mySlot;
-
+          subtitleText.textContent = '// SPARTAN-' + newSlot.toString().padStart(2, '0') + ' Assigned';
           render();
           debug('UI shown for slot ' + mySlot);
         }
         return;
       }
 
-      // ===== LOBBY SYNC =====
-      // Updates the player list
       if (msgStr.startsWith('lobbysync_')) {
         debug('Got sync');
         if (parseSync(msgStr)) {
@@ -759,7 +889,6 @@
         return;
       }
 
-      // ===== COUNTDOWN =====
       if (msgStr.startsWith('countdown_')) {
         const secs = parseInt(msgStr.substring(10)) || 3;
         startCountdown(secs);
@@ -770,7 +899,6 @@
         return;
       }
 
-      // ===== RESET =====
       if (msgStr === 'reset') {
         gameInProgress = false;
         resetState();
@@ -778,44 +906,34 @@
         return;
       }
 
-      // ===== EXIT LOBBY =====
-      // Player left the trigger zone
       if (msgStr === 'exit_lobby') {
         resetState();
         debug('Exited lobby');
         return;
       }
 
-      // ===== LEGACY MESSAGES (ignored) =====
-      // These are handled by Portals directly now
       if (msgStr === 'reset_teamselect' || msgStr === 'enter_lobby') {
         debug('Ignored: ' + msgStr + ' (waiting for my_slot_X)');
         return;
       }
 
-      // ===== SYNC MESSAGE (from active game) =====
-      // If we receive sync_, a game is in progress
       if (msgStr.startsWith('sync_')) {
         gameInProgress = true;
         debug('Game active - sync received');
         loadingState.innerHTML = `
-          <div class="loading-text" style="font-size:18px;color:#fbbf24;">GAME IN PROGRESS</div>
-          <div class="loading-text" style="margin-top:15px;font-size:11px;opacity:0.5;">Please wait for current match to end</div>
+          <div class="loading-text" style="font-size:16px;color:#ffaa00;letter-spacing:6px;">MATCH IN PROGRESS</div>
+          <div class="loading-text" style="margin-top:15px;font-size:11px;opacity:0.5;">// Standby for deployment</div>
         `;
         loadingState.style.display = 'block';
         mainContent.style.display = 'none';
         return;
       }
 
-      // Ignore time updates and other messages
       if (msgStr.startsWith('time_')) return;
 
       debug('Unknown: ' + msgStr.substring(0, 30));
     }
 
-    // ===========================================
-    // Initialize
-    // ===========================================
     if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
       PortalsSdk.setMessageListener(handleMessage);
       debug('SDK ready');
@@ -824,7 +942,7 @@
       debug('Fallback listener');
     }
 
-    console.log('[TS v33] Initialized - waiting for my_slot_X from Portals');
+    console.log('[TS v35] Initialized - waiting for my_slot_X from Portals');
   </script>
 </body>
 </html>

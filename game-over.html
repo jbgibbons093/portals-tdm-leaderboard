@@ -9,7 +9,7 @@
   <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap');
 
     * {
       margin: 0;
@@ -20,7 +20,7 @@
     html, body {
       width: 100%;
       height: 100%;
-      font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+      font-family: 'Rajdhani', sans-serif;
       background: transparent;
       overflow: hidden;
     }
@@ -34,12 +34,12 @@
       display: none;
       justify-content: center;
       align-items: center;
-      background: radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.9) 100%);
+      background: radial-gradient(ellipse at center, rgba(0,15,25,0.85) 0%, rgba(0,5,15,0.95) 100%);
     }
 
     .overlay.show {
       display: flex;
-      animation: overlayIn 0.3s ease-out;
+      animation: overlayIn 0.4s ease-out;
     }
 
     @keyframes overlayIn {
@@ -47,7 +47,7 @@
       to { opacity: 1; }
     }
 
-    /* Scanline effect */
+    /* Grid pattern overlay */
     .overlay::before {
       content: '';
       position: absolute;
@@ -55,68 +55,154 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: repeating-linear-gradient(
-        0deg,
-        rgba(0,0,0,0.1) 0px,
-        rgba(0,0,0,0.1) 1px,
-        transparent 1px,
-        transparent 3px
-      );
+      background:
+        linear-gradient(rgba(0,212,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
       pointer-events: none;
-      z-index: 10;
+      z-index: 1;
+    }
+
+    /* Animated horizontal scan */
+    .overlay::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg,
+        transparent 0%,
+        transparent 48%,
+        rgba(0,212,255,0.1) 49%,
+        rgba(0,212,255,0.2) 50%,
+        rgba(0,212,255,0.1) 51%,
+        transparent 52%,
+        transparent 100%
+      );
+      animation: scanDown 6s linear infinite;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    @keyframes scanDown {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100%); }
     }
 
     .game-over-box {
       position: relative;
-      background: transparent;
-      padding: 80px 180px;
+      background: linear-gradient(180deg, rgba(0,20,35,0.95) 0%, rgba(0,10,25,0.98) 100%);
+      padding: 60px 120px;
       text-align: center;
-      border: none;
+      z-index: 10;
+      clip-path: polygon(
+        40px 0, calc(100% - 40px) 0,
+        100% 40px, 100% calc(100% - 20px),
+        calc(100% - 20px) 100%, 20px 100%,
+        0 calc(100% - 20px), 0 40px
+      );
     }
 
+    /* Outer glow frame */
+    .game-over-box::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(135deg,
+        var(--team-glow) 0%,
+        rgba(0,212,255,0.15) 25%,
+        rgba(0,212,255,0.15) 75%,
+        var(--team-glow) 100%
+      );
+      clip-path: polygon(
+        40px 0, calc(100% - 40px) 0,
+        100% 40px, 100% calc(100% - 20px),
+        calc(100% - 20px) 100%, 20px 100%,
+        0 calc(100% - 20px), 0 40px
+      );
+      z-index: -1;
+      animation: victoryPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes victoryPulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
+    /* Corner brackets */
+    .corner-bracket {
+      position: absolute;
+      width: 25px;
+      height: 25px;
+      border-color: var(--team-color);
+      border-style: solid;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .corner-bracket.tl { top: 15px; left: 15px; border-width: 3px 0 0 3px; }
+    .corner-bracket.tr { top: 15px; right: 15px; border-width: 3px 3px 0 0; }
+    .corner-bracket.bl { bottom: 15px; left: 15px; border-width: 0 0 3px 3px; }
+    .corner-bracket.br { bottom: 15px; right: 15px; border-width: 0 3px 3px 0; }
 
     /* Team color variables */
-    .game-over-box.red { --team-color: #ef4444; --team-glow: rgba(239,68,68,0.6); }
-    .game-over-box.blue { --team-color: #3b82f6; --team-glow: rgba(59,130,246,0.6); }
-    .game-over-box.tie { --team-color: #a855f7; --team-glow: rgba(168,85,247,0.6); }
+    .game-over-box.red {
+      --team-color: #ff4444;
+      --team-glow: rgba(255,68,68,0.6);
+      --team-secondary: #ff6b6b;
+    }
+    .game-over-box.blue {
+      --team-color: #4488ff;
+      --team-glow: rgba(68,136,255,0.6);
+      --team-secondary: #6bb3ff;
+    }
+    .game-over-box.tie {
+      --team-color: #00d4ff;
+      --team-glow: rgba(0,212,255,0.6);
+      --team-secondary: #66e0ff;
+    }
 
     /* Victory label */
     .victory-label {
       font-family: 'Orbitron', sans-serif;
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 700;
-      letter-spacing: 10px;
-      color: rgba(255,255,255,0.4);
+      letter-spacing: 12px;
+      color: rgba(0,212,255,0.6);
       text-transform: uppercase;
-      margin-bottom: 12px;
+      margin-bottom: 15px;
       animation: labelIn 0.5s ease-out 0.2s both;
     }
 
     @keyframes labelIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translateY(-15px); letter-spacing: 20px; }
+      to { opacity: 1; transform: translateY(0); letter-spacing: 12px; }
     }
 
     .winner-text {
       font-family: 'Orbitron', sans-serif;
-      font-size: 96px;
+      font-size: 72px;
       font-weight: 900;
       text-transform: uppercase;
-      letter-spacing: 8px;
-      margin-bottom: 40px;
+      letter-spacing: 10px;
+      margin-bottom: 35px;
       color: var(--team-color);
       text-shadow:
         0 0 30px var(--team-glow),
         0 0 60px var(--team-glow),
-        0 0 90px var(--team-glow);
-      animation: titleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        0 0 100px var(--team-glow);
+      animation: titleIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
     @keyframes titleIn {
       0% {
         opacity: 0;
-        transform: scale(1.5) translateY(-20px);
-        filter: blur(10px);
+        transform: scale(1.8) translateY(-30px);
+        filter: blur(15px);
       }
       100% {
         opacity: 1;
@@ -130,13 +216,13 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 50px;
-      margin-bottom: 45px;
+      gap: 40px;
+      margin-bottom: 40px;
       animation: scoreIn 0.5s ease-out 0.3s both;
     }
 
     @keyframes scoreIn {
-      from { opacity: 0; transform: translateY(20px); }
+      from { opacity: 0; transform: translateY(25px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
@@ -144,73 +230,96 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-width: 120px;
+      min-width: 140px;
+      padding: 20px 30px;
+      background: rgba(0,0,0,0.3);
+      clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+    }
+
+    .team-score.red {
+      border-left: 2px solid rgba(255,68,68,0.4);
+    }
+
+    .team-score.blue {
+      border-right: 2px solid rgba(68,136,255,0.4);
     }
 
     .team-label {
       font-family: 'Orbitron', sans-serif;
-      font-size: 16px;
+      font-size: 12px;
       font-weight: 700;
       letter-spacing: 5px;
       text-transform: uppercase;
       margin-bottom: 8px;
     }
 
-    .team-label.red { color: rgba(239,68,68,0.8); }
-    .team-label.blue { color: rgba(59,130,246,0.8); }
+    .team-label.red {
+      color: rgba(255,68,68,0.8);
+      text-shadow: 0 0 10px rgba(255,68,68,0.4);
+    }
+    .team-label.blue {
+      color: rgba(68,136,255,0.8);
+      text-shadow: 0 0 10px rgba(68,136,255,0.4);
+    }
 
     .score-value {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 72px;
-      font-weight: 900;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 56px;
+      font-weight: 700;
       font-variant-numeric: tabular-nums;
+      letter-spacing: 3px;
     }
 
     .score-value.red {
-      color: #fca5a5;
-      text-shadow: 0 0 20px rgba(239,68,68,0.5);
+      color: #ff4444;
+      text-shadow: 0 0 25px rgba(255,68,68,0.6);
     }
 
     .score-value.blue {
-      color: #93c5fd;
-      text-shadow: 0 0 20px rgba(59,130,246,0.5);
+      color: #4488ff;
+      text-shadow: 0 0 25px rgba(68,136,255,0.6);
     }
 
     .score-divider {
       font-family: 'Orbitron', sans-serif;
-      font-size: 56px;
+      font-size: 48px;
       font-weight: 400;
-      color: rgba(255,255,255,0.3);
+      color: rgba(0,212,255,0.4);
     }
 
     /* Horizontal line accent */
     .divider-line {
       width: 100%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent 0%, var(--team-color) 50%, transparent 100%);
+      height: 2px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(0,212,255,0.2) 20%,
+        var(--team-color) 50%,
+        rgba(0,212,255,0.2) 80%,
+        transparent 100%
+      );
       margin-bottom: 25px;
-      opacity: 0.5;
       animation: lineIn 0.8s ease-out 0.4s both;
     }
 
     @keyframes lineIn {
-      from { transform: scaleX(0); }
-      to { transform: scaleX(1); }
+      from { transform: scaleX(0); opacity: 0; }
+      to { transform: scaleX(1); opacity: 1; }
     }
 
     .refresh-prompt {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 22px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 14px;
       font-weight: 500;
-      color: rgba(255,255,255,0.5);
+      color: rgba(0,212,255,0.5);
       text-transform: uppercase;
-      letter-spacing: 8px;
+      letter-spacing: 6px;
       animation: promptPulse 2.5s ease-in-out infinite;
     }
 
     @keyframes promptPulse {
-      0%, 100% { opacity: 0.5; }
-      50% { opacity: 0.9; }
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
     }
 
     /* Loading state */
@@ -218,7 +327,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 20px;
+      gap: 25px;
     }
 
     .loaded {
@@ -234,10 +343,10 @@
     }
 
     .loading-spinner {
-      width: 50px;
-      height: 50px;
-      border: 3px solid rgba(255,255,255,0.1);
-      border-top-color: rgba(255,255,255,0.7);
+      width: 60px;
+      height: 60px;
+      border: 3px solid rgba(0,212,255,0.15);
+      border-top-color: rgba(0,212,255,0.8);
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -248,58 +357,119 @@
 
     .loading-text {
       font-family: 'Orbitron', sans-serif;
-      font-size: 14px;
-      color: rgba(255,255,255,0.5);
-      letter-spacing: 4px;
+      font-size: 12px;
+      color: rgba(0,212,255,0.6);
+      letter-spacing: 6px;
       text-transform: uppercase;
+    }
+
+    /* Victory emblem - decorative hexagon */
+    .victory-emblem {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(180deg, var(--team-color) 0%, var(--team-glow) 100%);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      opacity: 0;
+      animation: emblemIn 0.6s ease-out 0.5s forwards;
+    }
+
+    .victory-emblem::before {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      right: 4px;
+      bottom: 4px;
+      background: rgba(0,20,35,0.9);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    }
+
+    @keyframes emblemIn {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.5) rotate(-180deg);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) scale(1) rotate(0deg);
+      }
+    }
+
+    #debug {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,20,30,0.9);
+      color: #00d4ff;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-family: 'Share Tech Mono', monospace;
+      z-index: 999;
+      border: 1px solid rgba(0,212,255,0.3);
+      clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
     }
   </style>
 </head>
 <body>
   <div class="overlay">
     <div class="game-over-box" id="gameOverBox">
+      <div class="corner-bracket tl"></div>
+      <div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div>
+      <div class="corner-bracket br"></div>
+      <div class="victory-emblem"></div>
+
       <!-- Loading state -->
       <div class="loading">
         <div class="loading-spinner"></div>
-        <span class="loading-text">Calculating...</span>
+        <span class="loading-text">// Calculating Results</span>
       </div>
 
       <!-- Loaded state -->
       <div class="loaded">
-        <div class="victory-label">Match Complete</div>
-        <div class="winner-text" id="winnerText">RED WINS</div>
+        <div class="victory-label">// Match Complete</div>
+        <div class="winner-text" id="winnerText">VICTORY</div>
 
         <div class="score-container">
-          <div class="team-score">
+          <div class="team-score red">
             <span class="team-label red">Red</span>
             <span class="score-value red" id="redScore">0</span>
           </div>
           <span class="score-divider">:</span>
-          <div class="team-score">
+          <div class="team-score blue">
             <span class="team-label blue">Blue</span>
             <span class="score-value blue" id="blueScore">0</span>
           </div>
         </div>
 
         <div class="divider-line"></div>
-        <div class="refresh-prompt">Refresh to play again</div>
+        <div class="refresh-prompt">// Refresh to deploy again</div>
       </div>
     </div>
   </div>
 
+  <div id="debug">SPARTAN DEBRIEF v2.0</div>
+
   <script>
     // ===========================================
-    // Game Over Screen for Portals TDM
-    // Reads winner/scores from URL parameters on load
-    // URL format: ?winner=red&red=50&blue=32
+    // Game Over Screen for Portals TDM - HALO
     // ===========================================
 
     const gameOverBox = document.getElementById('gameOverBox');
     const winnerTextEl = document.getElementById('winnerText');
     const redScoreEl = document.getElementById('redScore');
     const blueScoreEl = document.getElementById('blueScore');
+    const debugEl = document.getElementById('debug');
 
-    // Parse URL parameters
+    function debug(msg) {
+      console.log('[GameOver]', msg);
+      debugEl.textContent = msg;
+    }
+
     function getUrlParams() {
       const params = new URLSearchParams(window.location.search);
       return {
@@ -310,11 +480,9 @@
     }
 
     function displayGameOver(winner, redScore, blueScore) {
-      // Set team color class on box for CSS variables
       gameOverBox.classList.remove('red', 'blue', 'tie');
       gameOverBox.classList.add(winner);
 
-      // Set winner text
       if (winner === 'red') {
         winnerTextEl.textContent = 'RED WINS';
       } else if (winner === 'blue') {
@@ -323,15 +491,13 @@
         winnerTextEl.textContent = 'DRAW';
       }
 
-      // Set scores
       redScoreEl.textContent = redScore;
       blueScoreEl.textContent = blueScore;
 
-      // Show the overlay and loaded state
       document.querySelector('.overlay').classList.add('show');
       gameOverBox.classList.add('ready');
 
-      console.log('[GameOver] Displayed:', winner, redScore, '-', blueScore);
+      debug('Result: ' + winner.toUpperCase() + ' | ' + redScore + '-' + blueScore);
     }
 
     function handleMessage(message) {
@@ -339,56 +505,48 @@
 
       let msg = message;
 
-      // Parse if string
       if (typeof message === 'string') {
         try {
           msg = JSON.parse(message);
         } catch (e) {
-          // Keep as string
           msg = message;
         }
       }
 
-      // Convert to string for parsing
       const msgStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
 
-      // Parse gameover message: gameover_winner_red_blue
       if (msgStr.startsWith('gameover_')) {
         const parts = msgStr.split('_');
         if (parts.length >= 4) {
-          const winner = parts[1];      // 'red', 'blue', or 'tie'
-          const redScore = parts[2];    // red team score
-          const blueScore = parts[3];   // blue team score
+          const winner = parts[1];
+          const redScore = parts[2];
+          const blueScore = parts[3];
           displayGameOver(winner, redScore, blueScore);
         }
       }
     }
 
-    // Get winner from URL (hardcoded in iframe URL)
     const urlParams = getUrlParams();
     const winner = urlParams.winner;
 
-    // Function to send gameover_ready to Portals
     function sendGameoverReady() {
       if (typeof PortalsSdk !== 'undefined' && PortalsSdk.sendMessageToUnity) {
         PortalsSdk.sendMessageToUnity(JSON.stringify({
           TaskName: 'gameover_ready',
           TaskTargetState: 'SetNotActiveToCompleted'
         }));
-        console.log('[GameOver] Sent gameover_ready to Portals');
+        debug('Sent gameover_ready');
       }
     }
 
     if (winner) {
-      console.log('[GameOver] Winner from URL:', winner);
+      debug('Winner from URL: ' + winner);
 
-      // Set up listener for scores message
       function handleScoresMessage(message) {
         console.log('[GameOver] Received:', message);
 
         let msg = typeof message === 'string' ? message : JSON.stringify(message);
 
-        // Parse scores message: scores_50_32
         if (msg.startsWith('scores_')) {
           const parts = msg.split('_');
           if (parts.length >= 3) {
@@ -398,39 +556,35 @@
           }
         }
 
-        // Handle show_gameover trigger - re-send gameover_ready when iframe is re-activated
         if (msg === 'show_gameover') {
-          console.log('[GameOver] Re-activation trigger received');
+          debug('Re-activation trigger');
           sendGameoverReady();
         }
       }
 
       if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
         PortalsSdk.setMessageListener(handleScoresMessage);
-        console.log('[GameOver] SDK listener registered - waiting for scores');
+        debug('SDK listener ready');
       } else {
         window.addEventListener('message', (e) => handleScoresMessage(e.data));
-        console.log('[GameOver] Fallback listener - waiting for scores');
+        debug('Fallback listener');
       }
     } else {
-      // No winner in URL - use legacy message handling
       if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
         PortalsSdk.setMessageListener(handleMessage);
-        console.log('[GameOver] SDK listener registered');
+        debug('SDK listener registered');
       } else {
         window.addEventListener('message', (e) => handleMessage(e.data));
-        console.log('[GameOver] Using fallback listener');
+        debug('Using fallback listener');
       }
-      console.log('[GameOver] No URL params - waiting for gameover message');
+      debug('No URL params - waiting');
     }
 
-    // Notify Portals that game over screen is ready
-    // Use delay to ensure SDK connection is established
     setTimeout(() => {
       sendGameoverReady();
     }, 500);
 
-    console.log('[GameOver] Initialized');
+    debug('Initialized');
   </script>
 </body>
 </html>
