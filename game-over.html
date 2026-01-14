@@ -307,21 +307,6 @@
       to { transform: scaleX(1); opacity: 1; }
     }
 
-    .refresh-prompt {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 14px;
-      font-weight: 500;
-      color: rgba(0,212,255,0.5);
-      text-transform: uppercase;
-      letter-spacing: 6px;
-      animation: promptPulse 2.5s ease-in-out infinite;
-    }
-
-    @keyframes promptPulse {
-      0%, 100% { opacity: 0.4; }
-      50% { opacity: 0.8; }
-    }
-
     /* Loading state */
     .loading {
       display: flex;
@@ -447,7 +432,6 @@
         </div>
 
         <div class="divider-line"></div>
-        <div class="refresh-prompt">// Refresh to deploy again</div>
       </div>
     </div>
   </div>
