@@ -54,6 +54,8 @@ All three iframes use a **Halo-inspired military sci-fi aesthetic**:
 | `player_ready` | Button click | Player ready to start |
 | `player_unready` | Button click | Player cancels ready |
 | `all_players_ready` | Auto | All players ready, start countdown |
+| `clear_all_slots` | Reset Lobby button | Clears all lobby slots (admin function) |
+| `reset_my_lobby` | Auto (on external clear) | Resets local My_Slot and My_Team_Local |
 | `timer_red_wins` | Auto | Red reached 50 or time ran out with lead |
 | `timer_blue_wins` | Auto | Blue reached 50 or time ran out with lead |
 | `leaderboard_ready` | On HUD load | HUD initialized |
@@ -116,6 +118,82 @@ Iframe loads → Reads winner from URL → Sends gameover_ready
 gameover_ready triggers → Send scores_RED_BLUE
         ↓
 Iframe displays full results
+```
+
+## Event-Driven Lobby System (v37)
+
+The team-select iframe uses an **event-driven** architecture instead of polling. Updates are pushed instantly when any player action occurs.
+
+### How It Works
+
+1. Player action (join team, ready up, etc.) triggers a task
+2. Task updates variables AND triggers `broadcast_lobby`
+3. `broadcast_lobby` (Multiplayer) sends `lobbysync_...` to ALL players' iframes
+4. All iframes update instantly
+
+### broadcast_lobby Task
+
+| Component | Configuration |
+|-----------|---------------|
+| **Task Name** | `broadcast_lobby` |
+| **Type** | Multiplayer |
+| **Initial State** | NotActive |
+
+**Effect 1 - Send sync to all iframes:**
+(Send Message To Iframes effect)
+```
+lobbysync_|Slot1_Name|_|Slot1_Team|_|Slot1_Ready|_|Slot2_Name|_|Slot2_Team|_|Slot2_Ready|_|Slot3_Name|_|Slot3_Team|_|Slot3_Ready|_|Slot4_Name|_|Slot4_Team|_|Slot4_Ready|_|Slot5_Name|_|Slot5_Team|_|Slot5_Ready|_|Slot6_Name|_|Slot6_Team|_|Slot6_Ready|_|Slot7_Name|_|Slot7_Team|_|Slot7_Ready|_|Slot8_Name|_|Slot8_Team|_|Slot8_Ready|
+```
+
+**Effect 2 - Reset:**
+```
+SetTask('broadcast_lobby', 'NotActive', 0.1)
+```
+
+### Tasks That Trigger broadcast_lobby
+
+These tasks should include `SetTask('broadcast_lobby', 'Active', 0.1)` as an effect:
+- `claim_slot` - after assigning slot
+- `join_red` - after setting team
+- `join_blue` - after setting team
+- `player_ready` - after setting ready
+- `player_unready` - after clearing ready
+- `clear_my_slot` - after clearing slot
+- `clear_all_slots` - after clearing all slots (use 0.5 delay for variable sync)
+
+### Reset Lobby Feature
+
+The team-select iframe has a "Reset Lobby" button that clears all slots. Useful for clearing stale slots from disconnected players.
+
+**clear_all_slots Task (Multiplayer):**
+
+**Effect 1 - Clear all slots:**
+```
+if(SetVariable('Slot1_Name', 0.0, 0.0) == 0, if(SetVariable('Slot1_Team', 0.0, 0.0) == 0, if(SetVariable('Slot1_Ready', 0.0, 0.0) == 0, if(SetVariable('Slot2_Name', 0.0, 0.0) == 0, if(SetVariable('Slot2_Team', 0.0, 0.0) == 0, if(SetVariable('Slot2_Ready', 0.0, 0.0) == 0, if(SetVariable('Slot3_Name', 0.0, 0.0) == 0, if(SetVariable('Slot3_Team', 0.0, 0.0) == 0, if(SetVariable('Slot3_Ready', 0.0, 0.0) == 0, if(SetVariable('Slot4_Name', 0.0, 0.0) == 0, if(SetVariable('Slot4_Team', 0.0, 0.0) == 0, if(SetVariable('Slot4_Ready', 0.0, 0.0) == 0, if(SetVariable('Slot5_Name', 0.0, 0.0) == 0, if(SetVariable('Slot5_Team', 0.0, 0.0) == 0, if(SetVariable('Slot5_Ready', 0.0, 0.0) == 0, if(SetVariable('Slot6_Name', 0.0, 0.0) == 0, if(SetVariable('Slot6_Team', 0.0, 0.0) == 0, if(SetVariable('Slot6_Ready', 0.0, 0.0) == 0, if(SetVariable('Slot7_Name', 0.0, 0.0) == 0, if(SetVariable('Slot7_Team', 0.0, 0.0) == 0, if(SetVariable('Slot7_Ready', 0.0, 0.0) == 0, if(SetVariable('Slot8_Name', 0.0, 0.0) == 0, if(SetVariable('Slot8_Team', 0.0, 0.0) == 0, if(SetVariable('Slot8_Ready', 0.0, 0.0) == 0, 0, 0), 0), 0), 0), 0), 0), 0), 0), 0), 0), 0), 0), 0), 0), 0), 0), 0), 0), 0), 0), 0), 0), 0), 0)
+```
+
+**Effect 2 - Trigger broadcast (with delay for sync):**
+```
+SetTask('broadcast_lobby', 'Active', 0.5)
+```
+
+**Effect 3 - Reset:**
+```
+SetTask('clear_all_slots', 'NotActive', 0.1)
+```
+
+**reset_my_lobby Task (Single Player):**
+
+Called by iframe when it detects its slot was cleared externally.
+
+**Effect 1 - Reset local variables:**
+```
+SetVariable('My_Slot', 0.0, 0.0) + SetVariable('My_Team_Local', 0.0, 0.0)
+```
+
+**Effect 2 - Reset:**
+```
+SetTask('reset_my_lobby', 'NotActive', 0.1)
 ```
 
 ## Local Timer System (v3.0)
