@@ -315,19 +315,24 @@
     </div>
   </div>
 
-  <div id="debug">SPARTAN HUD v2.0</div>
+  <div id="debug">LOCAL TIMER v3.0</div>
 
   <script>
     // ===========================================
-    // TDM Leaderboard - Halo Style HUD
+    // TDM Leaderboard - LOCAL TIMER VERSION
+    // ===========================================
+    // Timer runs locally in the iframe after receiving game_start
+    // No longer relies on Portals server-side timer (Elapsed_Seconds)
     // ===========================================
 
-    const GAME_DURATION = 600;
+    const GAME_DURATION = 600; // 10 minutes in seconds
+    const WIN_SCORE = 50;
 
     let redScore = 0;
     let blueScore = 0;
     let timeRemaining = GAME_DURATION;
-    let gameActive = true;
+    let timerInterval = null;
+    let gameActive = false;
     let gameStartedClean = false;
 
     const redScoreEl = document.getElementById('redScore');
@@ -335,6 +340,7 @@
     const timerEl = document.getElementById('timer');
     const redKillEl = document.getElementById('redKill');
     const blueKillEl = document.getElementById('blueKill');
+    const debugEl = document.getElementById('debug');
 
     function formatTime(seconds) {
       const mins = Math.floor(seconds / 60);
@@ -352,34 +358,96 @@
       }
     }
 
-    let lastElapsed = 0;
-
-    function setElapsedTime(elapsed) {
-      const gameWasInactive = !gameActive;
-      const elapsedDropped = elapsed < lastElapsed - 20;
-
-      if (gameWasInactive || elapsedDropped) {
-        gameActive = true;
-        gameStartedClean = false;
-        redScore = 0;
-        blueScore = 0;
-        redScoreEl.textContent = '0';
-        blueScoreEl.textContent = '0';
+    // Start the local game timer
+    function startLocalTimer() {
+      // Clear any existing timer
+      if (timerInterval) {
+        clearInterval(timerInterval);
       }
 
-      lastElapsed = elapsed;
-      timeRemaining = Math.max(0, GAME_DURATION - elapsed);
+      // Reset game state
+      gameActive = true;
+      gameStartedClean = false;
+      timeRemaining = GAME_DURATION;
+      redScore = 0;
+      blueScore = 0;
+      redScoreEl.textContent = '0';
+      blueScoreEl.textContent = '0';
       updateTimerDisplay();
 
-      if (timeRemaining <= 0 && gameActive) {
-        endGameByTimer();
-      }
+      debugEl.textContent = 'GAME STARTED';
+      console.log('[Leaderboard] Game started - local timer running');
+
+      // Start countdown
+      timerInterval = setInterval(() => {
+        timeRemaining--;
+        updateTimerDisplay();
+
+        if (timeRemaining <= 0) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          endGameByTimer();
+        }
+      }, 1000);
     }
 
+    // Stop the timer
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      gameActive = false;
+      debugEl.textContent = 'TIMER STOPPED';
+      console.log('[Leaderboard] Timer stopped');
+    }
+
+    // Reset everything for new game
+    function resetGame() {
+      stopTimer();
+      redScore = 0;
+      blueScore = 0;
+      timeRemaining = GAME_DURATION;
+      gameStartedClean = false;
+
+      redScoreEl.textContent = '0';
+      blueScoreEl.textContent = '0';
+      updateTimerDisplay();
+
+      debugEl.textContent = 'GAME RESET';
+      console.log('[Leaderboard] Game reset');
+    }
+
+    // End game by timer expiry
     function endGameByTimer() {
       gameActive = false;
-      let winner = redScore > blueScore ? 'red' : (blueScore > redScore ? 'blue' : 'tie');
-      sendTaskUpdate(`timer_${winner}_wins`, 'SetNotActiveToActive');
+      console.log('[Leaderboard] Timer expired! Red:', redScore, 'Blue:', blueScore);
+      debugEl.textContent = 'TIME UP';
+
+      let taskName;
+      if (redScore > blueScore) {
+        taskName = 'timer_red_wins';
+        console.log('[Leaderboard] Red wins by score');
+      } else if (blueScore > redScore) {
+        taskName = 'timer_blue_wins';
+        console.log('[Leaderboard] Blue wins by score');
+      } else {
+        taskName = 'timer_tie_wins';
+        console.log('[Leaderboard] Tie game');
+      }
+
+      sendTaskUpdate(taskName, 'SetNotActiveToActive');
+    }
+
+    // End game by score (50 kills)
+    function endGameByScore(winner) {
+      stopTimer();
+      gameActive = false;
+      debugEl.textContent = winner.toUpperCase() + ' WINS!';
+      console.log('[Leaderboard] Game ended by score:', winner);
+
+      // Note: CheckWinner in Portals handles the win notification
+      // The iframe just stops tracking
     }
 
     function showKillIndicator(team) {
@@ -390,31 +458,21 @@
     }
 
     function updateScore(team, newScore) {
-      if (!gameStartedClean && newScore >= 20) return;
-      if (newScore <= 10 && newScore >= 1) gameStartedClean = true;
-
-      const currentScore = team === 'red' ? redScore : blueScore;
-
-      if (newScore <= 5 && !gameActive) {
-        gameActive = true;
-        gameStartedClean = true;
-        redScore = 0;
-        blueScore = 0;
-        redScoreEl.textContent = '0';
-        blueScoreEl.textContent = '0';
+      // STALE DATA FILTER: Reject high scores before game started clean
+      if (!gameStartedClean && newScore >= 20) {
+        console.log('[Leaderboard] REJECTED stale score:', team, newScore);
+        return;
       }
 
-      if (!gameActive) {
-        if (newScore < currentScore) {
-          gameActive = true;
-          gameStartedClean = true;
-          redScore = 0;
-          blueScore = 0;
-          redScoreEl.textContent = '0';
-          blueScoreEl.textContent = '0';
-        } else {
-          return;
-        }
+      // Once we see a low score (1-10), game has started clean
+      if (newScore <= 10 && newScore >= 1) {
+        gameStartedClean = true;
+      }
+
+      // If we receive a score but game isn't active, start the game
+      if (!gameActive && newScore >= 1 && newScore <= 10) {
+        console.log('[Leaderboard] Score received, starting game');
+        startLocalTimer();
       }
 
       const scoreEl = team === 'red' ? redScoreEl : blueScoreEl;
@@ -426,8 +484,9 @@
         blueScore = newScore;
       }
 
-      scoreEl.textContent = newScore;
+      scoreEl.textContent = Math.min(WIN_SCORE, newScore);
 
+      // Show kill indicator if score increased
       if (newScore > oldScore) {
         scoreEl.classList.remove('changed');
         void scoreEl.offsetWidth;
@@ -435,14 +494,12 @@
         showKillIndicator(team);
       }
 
-      if (newScore >= 50) {
+      debugEl.textContent = 'R:' + redScore + ' B:' + blueScore;
+
+      // Check for win by score
+      if (newScore >= WIN_SCORE) {
         endGameByScore(team);
       }
-    }
-
-    function endGameByScore(winner) {
-      gameActive = false;
-      sendTaskUpdate(`timer_${winner}_wins`, 'SetNotActiveToActive');
     }
 
     function sendTaskUpdate(taskName, taskState) {
@@ -452,7 +509,10 @@
           TaskName: taskName,
           TaskTargetState: taskState
         }));
-      } catch (e) {}
+        console.log('[Leaderboard] Sent task:', taskName, taskState);
+      } catch (e) {
+        console.error('[Leaderboard] Failed to send task:', e);
+      }
     }
 
     function handlePortalsMessage(message) {
@@ -462,69 +522,94 @@
       }
 
       const msg = typeof data === 'string' ? data : JSON.stringify(data);
-      document.getElementById('debug').textContent = 'RX: ' + msg.substring(0, 30);
+      console.log('[Leaderboard] Received:', msg);
 
-      if (msg.startsWith('time_')) {
-        const elapsed = parseFloat(msg.substring(5));
-        if (!isNaN(elapsed)) setElapsedTime(elapsed);
-      } else if (msg.startsWith('red_')) {
+      // GAME START - Begin local timer
+      if (msg === 'game_start') {
+        startLocalTimer();
+        return;
+      }
+
+      // RESET - Stop timer and clear scores
+      if (msg === 'reset') {
+        resetGame();
+        return;
+      }
+
+      // RED SCORE UPDATE: red_XX
+      if (msg.startsWith('red_')) {
         const score = parseFloat(msg.substring(4));
-        if (!isNaN(score)) updateScore('red', score);
-      } else if (msg.startsWith('blue_')) {
+        if (!isNaN(score)) {
+          updateScore('red', score);
+        }
+        return;
+      }
+
+      // BLUE SCORE UPDATE: blue_XX
+      if (msg.startsWith('blue_')) {
         const score = parseFloat(msg.substring(5));
-        if (!isNaN(score)) updateScore('blue', score);
-      } else if (msg.startsWith('sync_')) {
+        if (!isNaN(score)) {
+          updateScore('blue', score);
+        }
+        return;
+      }
+
+      // SYNC MESSAGE (legacy format): sync_elapsed_red_blue
+      if (msg.startsWith('sync_')) {
         const parts = msg.substring(5).split('_');
         if (parts.length >= 3) {
-          const elapsed = parseFloat(parts[0]);
+          // parts[0] = elapsed (ignored - using local timer)
           const red = parseFloat(parts[1]);
           const blue = parseFloat(parts[2]);
-
-          const wasInactive = !gameActive;
-          if (!isNaN(elapsed)) setElapsedTime(elapsed);
-
-          const isNewGame = wasInactive || elapsed <= 5;
-          if (isNewGame) {
-            redScore = 0;
-            blueScore = 0;
-            redScoreEl.textContent = '0';
-            blueScoreEl.textContent = '0';
-            gameStartedClean = false;
-          } else {
-            if (!isNaN(red) && red >= redScore) {
-              if (red > redScore) showKillIndicator('red');
-              redScore = red;
-              redScoreEl.textContent = red;
-            }
-            if (!isNaN(blue) && blue >= blueScore) {
-              if (blue > blueScore) showKillIndicator('blue');
-              blueScore = blue;
-              blueScoreEl.textContent = blue;
-            }
-          }
-          updateTimerDisplay();
+          if (!isNaN(red)) updateScore('red', red);
+          if (!isNaN(blue)) updateScore('blue', blue);
         }
-      } else if (msg === 'reset') {
-        gameActive = true;
-        gameStartedClean = false;
-        redScore = 0;
-        blueScore = 0;
-        timeRemaining = GAME_DURATION;
-        redScoreEl.textContent = '0';
-        blueScoreEl.textContent = '0';
-        updateTimerDisplay();
-        sendTaskUpdate('leaderboard_reset', 'SetNotActiveToCompleted');
+        return;
+      }
+
+      // LEGACY TIME MESSAGES (ignored - using local timer)
+      if (msg.startsWith('time_')) {
+        console.log('[Leaderboard] Ignoring server time - using local timer');
+        // If we receive time messages, it means game is running
+        // Start our local timer if not already running
+        if (!gameActive && !timerInterval) {
+          const elapsed = parseFloat(msg.substring(5));
+          if (!isNaN(elapsed) && elapsed < GAME_DURATION - 10) {
+            // Game recently started, start our timer
+            startLocalTimer();
+          }
+        }
+        return;
       }
     }
 
-    if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
-      PortalsSdk.setMessageListener(handlePortalsMessage);
-    } else {
-      window.addEventListener('message', (e) => handlePortalsMessage(e.data));
+    // Initialize
+    function init() {
+      console.log('[Leaderboard] Initializing - Local Timer Version v3.0');
+
+      // Set up message listener
+      if (typeof PortalsSdk !== 'undefined' && PortalsSdk.setMessageListener) {
+        PortalsSdk.setMessageListener(handlePortalsMessage);
+      } else {
+        window.addEventListener('message', (e) => handlePortalsMessage(e.data));
+      }
+
+      // Initial display
+      updateTimerDisplay();
+
+      // Send ready notification
+      sendTaskUpdate('leaderboard_ready', 'SetNotActiveToCompleted');
+
+      debugEl.textContent = 'WAITING';
+      console.log('[Leaderboard] Ready - waiting for game_start');
     }
 
-    updateTimerDisplay();
-    sendTaskUpdate('leaderboard_ready', 'SetNotActiveToCompleted');
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
   </script>
 </body>
 </html>
