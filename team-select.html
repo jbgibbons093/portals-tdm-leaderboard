@@ -838,10 +838,8 @@
     });
 
     document.getElementById('resetLobbyBtn').addEventListener('click', () => {
-      if (confirm('Reset all lobby slots?')) {
-        sendTask('clear_all_slots');
-        debug('Reset lobby requested');
-      }
+      sendTask('clear_all_slots');
+      debug('Reset lobby requested');
     });
 
     function startCountdown(seconds) {
