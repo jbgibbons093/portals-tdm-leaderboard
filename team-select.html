@@ -449,6 +449,27 @@
       50% { opacity: 1; }
     }
 
+    .reset-btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      background: rgba(255,68,68,0.15);
+      color: rgba(255,100,100,0.7);
+      border: 1px solid rgba(255,68,68,0.3);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+    }
+
+    .reset-btn:hover {
+      background: rgba(255,68,68,0.3);
+      color: #ff6b6b;
+      border-color: rgba(255,68,68,0.5);
+    }
+
     .countdown-overlay {
       position: absolute;
       top: 0;
@@ -607,6 +628,7 @@
 
         <div class="status-bar">
           <div class="status-text" id="statusText">// Waiting for players</div>
+          <button class="reset-btn" id="resetLobbyBtn">Reset Lobby</button>
         </div>
       </div>
     </div>
@@ -813,6 +835,13 @@
         sendTask('player_ready');
       }
       render();
+    });
+
+    document.getElementById('resetLobbyBtn').addEventListener('click', () => {
+      if (confirm('Reset all lobby slots?')) {
+        sendTask('clear_all_slots');
+        debug('Reset lobby requested');
+      }
     });
 
     function startCountdown(seconds) {
