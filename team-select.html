@@ -612,11 +612,14 @@
     </div>
   </div>
 
-  <div id="debug">SPARTAN LOBBY v2.0</div>
+  <div id="debug">SPARTAN LOBBY v3.0</div>
 
   <script>
     // ===========================================
-    // Team Selection for Portals TDM - v35 HALO
+    // Team Selection for Portals TDM - v36 EVENT-DRIVEN
+    // ===========================================
+    // Updates are PUSHED via broadcast_lobby task
+    // No polling - Portals broadcasts on every change
     // ===========================================
 
     const MAX_SLOTS = 8;
@@ -650,8 +653,8 @@
     const debugEl = document.getElementById('debug');
 
     function debug(msg) {
-      console.log('[TS v35]', msg);
-      debugEl.textContent = 'v35 | slot:' + mySlot + ' team:' + myTeam + ' | ' + msg;
+      console.log('[TS v36]', msg);
+      debugEl.textContent = 'v36 | slot:' + mySlot + ' team:' + myTeam + ' | ' + msg;
     }
 
     function sendTask(taskName, state) {
@@ -843,7 +846,7 @@
         try { msgStr = JSON.stringify(message); } catch(e) { msgStr = String(message); }
       }
 
-      console.log('[TS v35] Received:', msgStr);
+      console.log('[TS v36] Received:', msgStr);
 
       if (msgStr.startsWith('game_status_')) {
         const status = parseInt(msgStr.substring(12)) || 0;
@@ -958,7 +961,7 @@
       debug('Fallback listener');
     }
 
-    console.log('[TS v35] Initialized - waiting for my_slot_X from Portals');
+    console.log('[TS v36] Initialized - waiting for my_slot_X from Portals');
   </script>
 </body>
 </html>
