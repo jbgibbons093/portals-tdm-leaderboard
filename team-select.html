@@ -727,12 +727,20 @@
       if (mySlot > 0 && slots[mySlot] && slots[mySlot].claimed === 0) {
         debug('My slot was cleared externally - resetting');
         sendTask('reset_my_lobby');  // Reset local variables in Portals
-        resetState();
-        // Re-request a slot after short delay
-        setTimeout(() => {
-          sendTeamSelectReady();
-        }, 500);
-        return false;  // Don't render, we're resetting
+        mySlot = 0;
+        myTeam = 0;
+        myReady = false;
+        gameStarting = false;
+        allReadySent = false;
+        // Show "lobby reset" message instead of loading spinner
+        loadingState.innerHTML = `
+          <div class="loading-text" style="font-size:16px;color:#00d4ff;letter-spacing:6px;">LOBBY RESET</div>
+          <div class="loading-text" style="margin-top:15px;font-size:11px;opacity:0.5;">// Re-enter lobby to rejoin</div>
+        `;
+        loadingState.style.display = 'block';
+        mainContent.style.display = 'none';
+        countdownOverlay.classList.remove('show');
+        return false;  // Don't render
       }
 
       if (mySlot > 0 && slots[mySlot]) {
