@@ -638,7 +638,7 @@
 
   <script>
     // ===========================================
-    // Team Selection for Portals TDM - v36 EVENT-DRIVEN
+    // Team Selection for Portals TDM - v37 EVENT-DRIVEN
     // ===========================================
     // Updates are PUSHED via broadcast_lobby task
     // No polling - Portals broadcasts on every change
@@ -675,7 +675,7 @@
     const debugEl = document.getElementById('debug');
 
     function debug(msg) {
-      console.log('[TS v36]', msg);
+      console.log('[TS v37]', msg);
       debugEl.textContent = 'v36 | slot:' + mySlot + ' team:' + myTeam + ' | ' + msg;
     }
 
@@ -722,6 +722,19 @@
           };
         }
       }
+
+      // Detect if our slot was cleared externally (e.g., Reset Lobby button)
+      if (mySlot > 0 && slots[mySlot] && slots[mySlot].claimed === 0) {
+        debug('My slot was cleared externally - resetting');
+        sendTask('reset_my_lobby');  // Reset local variables in Portals
+        resetState();
+        // Re-request a slot after short delay
+        setTimeout(() => {
+          sendTeamSelectReady();
+        }, 500);
+        return false;  // Don't render, we're resetting
+      }
+
       if (mySlot > 0 && slots[mySlot]) {
         myTeam = slots[mySlot].team;
         myReady = slots[mySlot].ready === 1;
@@ -873,7 +886,7 @@
         try { msgStr = JSON.stringify(message); } catch(e) { msgStr = String(message); }
       }
 
-      console.log('[TS v36] Received:', msgStr);
+      console.log('[TS v37] Received:', msgStr);
 
       if (msgStr.startsWith('game_status_')) {
         const status = parseInt(msgStr.substring(12)) || 0;
@@ -988,7 +1001,7 @@
       debug('Fallback listener');
     }
 
-    console.log('[TS v36] Initialized - waiting for my_slot_X from Portals');
+    console.log('[TS v37] Initialized - waiting for my_slot_X from Portals');
   </script>
 </body>
 </html>
