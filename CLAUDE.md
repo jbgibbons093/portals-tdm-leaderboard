@@ -30,17 +30,18 @@ All three iframes use a **Halo-inspired military sci-fi aesthetic**:
 
 ### Portals → Iframe
 
-| Message | Format | Example |
-|---------|--------|---------|
-| Sync all data | `sync_TIME_RED_BLUE` | `sync_120_25_18` |
-| Red score only | `red_SCORE` | `red_25` |
-| Blue score only | `blue_SCORE` | `blue_18` |
-| Time only | `time_ELAPSED` | `time_120` |
-| Player slot | `my_slot_X` | `my_slot_3` |
-| Lobby sync | `lobbysync_C1_T1_R1_C2_T2_R2...` | 8 slots × 3 values |
-| Countdown | `countdown_X` | `countdown_3` |
-| Scores (game-over) | `scores_RED_BLUE` | `scores_50_32` |
-| Reset | `reset` | `reset` |
+| Message | Format | Example | Used By |
+|---------|--------|---------|---------|
+| **Game start** | `game_start` | `game_start` | HUD - starts local timer |
+| Red score only | `red_SCORE` | `red_25` | HUD |
+| Blue score only | `blue_SCORE` | `blue_18` | HUD |
+| Reset | `reset` | `reset` | HUD - stops timer, resets display |
+| Player slot | `my_slot_X` | `my_slot_3` | Team-select |
+| Lobby sync | `lobbysync_C1_T1_R1_C2_T2_R2...` | 8 slots × 3 values | Team-select |
+| Countdown | `countdown_X` | `countdown_3` | Team-select |
+| Scores (game-over) | `scores_RED_BLUE` | `scores_50_32` | Game-over |
+| Sync all data (legacy) | `sync_TIME_RED_BLUE` | `sync_120_25_18` | HUD (backwards compatible) |
+| Time only (legacy) | `time_ELAPSED` | `time_120` | HUD (ignored - uses local timer) |
 
 ### Iframe → Portals
 
@@ -62,25 +63,28 @@ All three iframes use a **Halo-inspired military sci-fi aesthetic**:
 ### Variables (Multiplayer)
 - `Red_Score` - Red team points
 - `Blue_Score` - Blue team points
-- `Elapsed_Seconds` - Game timer
-- `Game_In_Progress` - 1 during gameplay, 0 otherwise
-- `Slot1_Claimed` through `Slot8_Claimed` - Lobby slot tracking
-- `Slot1_Team` through `Slot8_Team` - Team assignments
-- `Slot1_Ready` through `Slot8_Ready` - Ready status
+- `Slot1_Name` through `Slot8_Name` - Lobby slot claimed (0=empty, 1=claimed)
+- `Slot1_Team` through `Slot8_Team` - Team assignments (0=none, 1=red, 2=blue)
+- `Slot1_Ready` through `Slot8_Ready` - Ready status (0=not ready, 1=ready)
+
+**Note:** Timer is handled locally by the leaderboard iframe. No server-side timer variables needed.
 
 ### Variables (Single Player)
 - `Player_Team` - This player's team (0=none, 1=red, 2=blue)
 - `My_Slot` - This player's lobby slot (1-8)
+- `My_Team_Local` - Local team choice for lobby
 
 ### Key Tasks
+
+**start_game**
+- Trigger: Via iframe (all players ready)
+- Action: Teleport players to spawns, send `game_start` to iframes
+- **Important:** Must include `Send Message To Iframes: game_start` effect
 
 **team_select_ready**
 - Trigger: Iframe Message Received
 - On Completed: Trigger `claim_slot` to assign player their slot
 - Reset: Set back to NotActive when player enters lobby
-
-**SyncToHUD** (looping, host-only)
-- Sends `sync_|Elapsed_Seconds|_|Red_Score|_|Blue_Score|` every second
 
 **UpdateRedScore / UpdateBlueScore**
 - Trigger: Value Updated on Red_Score / Blue_Score
@@ -113,6 +117,26 @@ gameover_ready triggers → Send scores_RED_BLUE
         ↓
 Iframe displays full results
 ```
+
+## Local Timer System (v3.0)
+
+The leaderboard HUD now uses a **local timer** instead of relying on server-side `Elapsed_Seconds`:
+
+### How It Works
+1. `start_game` task sends `game_start` message to iframes
+2. HUD starts local 10-minute countdown
+3. On timer expiry, HUD compares scores and sends `timer_red_wins`, `timer_blue_wins`, or `timer_tie_wins`
+4. On game end, `gameover_ready` sends `reset` message to stop timer
+
+### Benefits
+- No need for `Elapsed_Seconds`, `Timer_Host_Exists`, `I_Am_Host` variables
+- No need for `GameTimer`, `DelayedHostCheck`, `BecomeHost` tasks
+- No timer acceleration when multiple players join
+- Simpler reset logic
+
+### Backwards Compatibility
+- Still accepts `time_` and `sync_` messages (for legacy setups)
+- If `time_` received before `game_start`, will auto-start local timer
 
 ## Stale Data Handling
 
