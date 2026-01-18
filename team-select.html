@@ -634,18 +634,21 @@
     </div>
   </div>
 
-  <div id="debug">SPARTAN LOBBY v3.0</div>
+  <div id="debug">SPARTAN LOBBY v39</div>
 
   <script>
     // ===========================================
-    // Team Selection for Portals TDM - v38 EVENT-DRIVEN
+    // Team Selection for Portals TDM - v39 EVENT-DRIVEN
     // ===========================================
     // Updates are PUSHED via broadcast_lobby task
     // No polling - Portals broadcasts on every change
+    // v39: Fixed allReadySent reset, countdown cleanup,
+    //      added heartbeat resync, request sync on slot
     // ===========================================
 
     const MAX_SLOTS = 8;
     const MAX_PER_TEAM = 4;
+    const RESYNC_INTERVAL_MS = 15000; // Request resync if no updates for 15 seconds
 
     let mySlot = 0;
     let myTeam = 0;
@@ -653,6 +656,8 @@
     let gameStarting = false;
     let allReadySent = false;
     let gameInProgress = false;
+    let countdownInterval = null; // Track countdown interval for cleanup
+    let lastSyncTime = Date.now(); // Track last sync for heartbeat
 
     const slots = {};
     for (let i = 1; i <= MAX_SLOTS; i++) {
@@ -675,8 +680,8 @@
     const debugEl = document.getElementById('debug');
 
     function debug(msg) {
-      console.log('[TS v38]', msg);
-      debugEl.textContent = 'v36 | slot:' + mySlot + ' team:' + myTeam + ' | ' + msg;
+      console.log('[TS v39]', msg);
+      debugEl.textContent = 'v39 | slot:' + mySlot + ' team:' + myTeam + ' | ' + msg;
     }
 
     function sendTask(taskName, state) {
@@ -697,6 +702,11 @@
       myReady = false;
       gameStarting = false;
       allReadySent = false;
+      // Clear countdown interval if running
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
       for (let i = 1; i <= MAX_SLOTS; i++) {
         slots[i] = { claimed: 0, team: 0, ready: 0 };
       }
@@ -711,6 +721,10 @@
 
     function parseSync(msgStr) {
       if (!msgStr.startsWith('lobbysync_')) return false;
+
+      // Track last sync time for heartbeat
+      lastSyncTime = Date.now();
+
       const parts = msgStr.substring(10).split('_');
       for (let i = 0; i < MAX_SLOTS; i++) {
         const idx = i * 3;
@@ -823,6 +837,8 @@
       } else {
         statusText.textContent = '// ' + allReady.length + '/' + allWithTeam.length + ' players ready';
         statusText.className = 'status-text';
+        // FIX: Reset allReadySent when not all ready, so it can fire again if players re-ready
+        allReadySent = false;
       }
 
       debug('Rendered: red=' + redPlayers.length + ' blue=' + bluePlayers.length);
@@ -866,18 +882,27 @@
     function startCountdown(seconds) {
       if (gameStarting) return;
       gameStarting = true;
+
+      // Clear any existing countdown interval
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+      }
+
       countdownOverlay.classList.add('show');
 
       let count = seconds || 3;
       countdownNumber.textContent = count;
 
-      const interval = setInterval(() => {
+      countdownInterval = setInterval(() => {
         count--;
         if (count > 0) {
           countdownNumber.textContent = count;
         } else {
-          clearInterval(interval);
+          clearInterval(countdownInterval);
+          countdownInterval = null;
           countdownNumber.textContent = 'GO!';
+          // FIX: Set gameInProgress so slot assignments are ignored during game
+          gameInProgress = true;
           setTimeout(() => {
             resetState();
             debug('Game started - reset');
@@ -894,7 +919,7 @@
         try { msgStr = JSON.stringify(message); } catch(e) { msgStr = String(message); }
       }
 
-      console.log('[TS v38] Received:', msgStr);
+      console.log('[TS v39] Received:', msgStr);
 
       if (msgStr.startsWith('game_status_')) {
         const status = parseInt(msgStr.substring(12)) || 0;
@@ -927,7 +952,9 @@
           mainContent.style.display = 'block';
           subtitleText.textContent = '// SPARTAN-' + newSlot.toString().padStart(2, '0') + ' Assigned';
           render();
-          debug('UI shown for slot ' + mySlot);
+          // FIX: Request current lobby state to see other players immediately
+          sendTask('request_sync');
+          debug('UI shown for slot ' + mySlot + ' - requested sync');
         }
         return;
       }
@@ -1000,7 +1027,20 @@
       debug('Fallback listener');
     }
 
-    console.log('[TS v38] Initialized - waiting for my_slot_X from Portals');
+    // FIX: Heartbeat resync - if no updates received for 15 seconds, request sync
+    // This recovers from missed messages due to network issues
+    setInterval(() => {
+      if (mySlot > 0 && !gameStarting && !gameInProgress) {
+        const timeSinceLastSync = Date.now() - lastSyncTime;
+        if (timeSinceLastSync > RESYNC_INTERVAL_MS) {
+          debug('Heartbeat: requesting resync (stale ' + Math.round(timeSinceLastSync/1000) + 's)');
+          sendTask('request_sync');
+          lastSyncTime = Date.now(); // Reset to avoid spamming
+        }
+      }
+    }, 5000); // Check every 5 seconds
+
+    console.log('[TS v39] Initialized - waiting for my_slot_X from Portals');
   </script>
 </body>
 </html>
