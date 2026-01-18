@@ -638,7 +638,7 @@
 
   <script>
     // ===========================================
-    // Team Selection for Portals TDM - v37 EVENT-DRIVEN
+    // Team Selection for Portals TDM - v38 EVENT-DRIVEN
     // ===========================================
     // Updates are PUSHED via broadcast_lobby task
     // No polling - Portals broadcasts on every change
@@ -675,7 +675,7 @@
     const debugEl = document.getElementById('debug');
 
     function debug(msg) {
-      console.log('[TS v37]', msg);
+      console.log('[TS v38]', msg);
       debugEl.textContent = 'v36 | slot:' + mySlot + ' team:' + myTeam + ' | ' + msg;
     }
 
@@ -894,7 +894,7 @@
         try { msgStr = JSON.stringify(message); } catch(e) { msgStr = String(message); }
       }
 
-      console.log('[TS v37] Received:', msgStr);
+      console.log('[TS v38] Received:', msgStr);
 
       if (msgStr.startsWith('game_status_')) {
         const status = parseInt(msgStr.substring(12)) || 0;
@@ -968,17 +968,8 @@
         return;
       }
 
-      if (msgStr.startsWith('sync_')) {
-        gameInProgress = true;
-        debug('Game active - sync received');
-        loadingState.innerHTML = `
-          <div class="loading-text" style="font-size:16px;color:#ffaa00;letter-spacing:6px;">MATCH IN PROGRESS</div>
-          <div class="loading-text" style="margin-top:15px;font-size:11px;opacity:0.5;">// Standby for deployment</div>
-        `;
-        loadingState.style.display = 'block';
-        mainContent.style.display = 'none';
-        return;
-      }
+      // Legacy sync_ detection removed - no longer used with local timer system
+      // Game-in-progress detection now handled by game_status_ messages if needed
 
       if (msgStr.startsWith('time_')) return;
 
@@ -1009,7 +1000,7 @@
       debug('Fallback listener');
     }
 
-    console.log('[TS v37] Initialized - waiting for my_slot_X from Portals');
+    console.log('[TS v38] Initialized - waiting for my_slot_X from Portals');
   </script>
 </body>
 </html>
