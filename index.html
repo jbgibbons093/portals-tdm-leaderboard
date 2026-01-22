@@ -597,8 +597,7 @@
       // Initial display
       updateTimerDisplay();
 
-      // Send ready notification
-      sendTaskUpdate('leaderboard_ready', 'SetNotActiveToCompleted');
+      // NOTE: Removed leaderboard_ready notification - not needed and causes spam if task doesn't exist
 
       debugEl.textContent = 'WAITING';
       console.log('[Leaderboard] Ready - waiting for game_start');
