@@ -634,21 +634,24 @@
     </div>
   </div>
 
-  <div id="debug">SPARTAN LOBBY v39</div>
+  <div id="debug">SPARTAN LOBBY v40</div>
 
   <script>
     // ===========================================
-    // Team Selection for Portals TDM - v39 EVENT-DRIVEN
+    // Team Selection for Portals TDM - v40 THROTTLED
     // ===========================================
     // Updates are PUSHED via broadcast_lobby task
     // No polling - Portals broadcasts on every change
-    // v39: Fixed allReadySent reset, countdown cleanup,
-    //      added heartbeat resync, request sync on slot
+    // v40: FIXED SERVER SPAM - throttled heartbeat from
+    //      5s to 30s, added max 3 resync attempts,
+    //      removed redundant request_sync on slot assign
     // ===========================================
 
     const MAX_SLOTS = 8;
     const MAX_PER_TEAM = 4;
-    const RESYNC_INTERVAL_MS = 15000; // Request resync if no updates for 15 seconds
+    const RESYNC_INTERVAL_MS = 30000; // Request resync if no updates for 30 seconds
+    const HEARTBEAT_CHECK_MS = 30000; // Check every 30 seconds (was 5s - too aggressive)
+    const MAX_RESYNC_ATTEMPTS = 3; // Stop trying after 3 failed resyncs
 
     let mySlot = 0;
     let myTeam = 0;
@@ -658,6 +661,7 @@
     let gameInProgress = false;
     let countdownInterval = null; // Track countdown interval for cleanup
     let lastSyncTime = Date.now(); // Track last sync for heartbeat
+    let resyncAttempts = 0; // Track failed resync attempts to prevent spam
 
     const slots = {};
     for (let i = 1; i <= MAX_SLOTS; i++) {
@@ -680,8 +684,8 @@
     const debugEl = document.getElementById('debug');
 
     function debug(msg) {
-      console.log('[TS v39]', msg);
-      debugEl.textContent = 'v39 | slot:' + mySlot + ' team:' + myTeam + ' | ' + msg;
+      console.log('[TS v40]', msg);
+      debugEl.textContent = 'v40 | slot:' + mySlot + ' team:' + myTeam + ' | ' + msg;
     }
 
     function sendTask(taskName, state) {
@@ -702,6 +706,7 @@
       myReady = false;
       gameStarting = false;
       allReadySent = false;
+      resyncAttempts = 0; // Reset resync counter for fresh start
       // Clear countdown interval if running
       if (countdownInterval) {
         clearInterval(countdownInterval);
@@ -724,6 +729,7 @@
 
       // Track last sync time for heartbeat
       lastSyncTime = Date.now();
+      resyncAttempts = 0; // Reset counter on successful sync
 
       const parts = msgStr.substring(10).split('_');
       for (let i = 0; i < MAX_SLOTS; i++) {
@@ -919,7 +925,7 @@
         try { msgStr = JSON.stringify(message); } catch(e) { msgStr = String(message); }
       }
 
-      console.log('[TS v39] Received:', msgStr);
+      console.log('[TS v40] Received:', msgStr);
 
       if (msgStr.startsWith('game_status_')) {
         const status = parseInt(msgStr.substring(12)) || 0;
@@ -952,9 +958,8 @@
           mainContent.style.display = 'block';
           subtitleText.textContent = '// SPARTAN-' + newSlot.toString().padStart(2, '0') + ' Assigned';
           render();
-          // FIX: Request current lobby state to see other players immediately
-          sendTask('request_sync');
-          debug('UI shown for slot ' + mySlot + ' - requested sync');
+          // NOTE: claim_slot already triggers broadcast_lobby, no need for request_sync here
+          debug('UI shown for slot ' + mySlot);
         }
         return;
       }
@@ -1027,20 +1032,26 @@
       debug('Fallback listener');
     }
 
-    // FIX: Heartbeat resync - if no updates received for 15 seconds, request sync
+    // Heartbeat resync - if no updates received for 30 seconds, request sync
     // This recovers from missed messages due to network issues
+    // THROTTLED: Only checks every 30s and stops after 3 failed attempts to prevent server spam
     setInterval(() => {
       if (mySlot > 0 && !gameStarting && !gameInProgress) {
         const timeSinceLastSync = Date.now() - lastSyncTime;
         if (timeSinceLastSync > RESYNC_INTERVAL_MS) {
-          debug('Heartbeat: requesting resync (stale ' + Math.round(timeSinceLastSync/1000) + 's)');
-          sendTask('request_sync');
-          lastSyncTime = Date.now(); // Reset to avoid spamming
+          if (resyncAttempts < MAX_RESYNC_ATTEMPTS) {
+            resyncAttempts++;
+            debug('Heartbeat resync attempt ' + resyncAttempts + '/' + MAX_RESYNC_ATTEMPTS);
+            sendTask('request_sync');
+            lastSyncTime = Date.now(); // Reset to avoid spamming
+          } else {
+            debug('Heartbeat stopped - max attempts reached');
+          }
         }
       }
-    }, 5000); // Check every 5 seconds
+    }, HEARTBEAT_CHECK_MS); // Check every 30 seconds (was 5s)
 
-    console.log('[TS v39] Initialized - waiting for my_slot_X from Portals');
+    console.log('[TS v40] Initialized - waiting for my_slot_X from Portals');
   </script>
 </body>
 </html>
