@@ -634,7 +634,7 @@
     </div>
   </div>
 
-  <div id="debug">SPARTAN LOBBY v40</div>
+  <div id="debug">SPARTAN LOBBY v41</div>
 
   <script>
     // ===========================================
@@ -958,8 +958,16 @@
           mainContent.style.display = 'block';
           subtitleText.textContent = '// SPARTAN-' + newSlot.toString().padStart(2, '0') + ' Assigned';
           render();
-          // NOTE: claim_slot already triggers broadcast_lobby, no need for request_sync here
           debug('UI shown for slot ' + mySlot);
+        } else {
+          // Got my_slot_0 - slot assignment may not have completed yet, retry
+          debug('Got slot 0 - retrying in 500ms');
+          setTimeout(() => {
+            if (mySlot === 0 && !gameInProgress) {
+              debug('Retrying team_select_ready');
+              sendTask('team_select_ready', 'SetNotActiveToCompleted');
+            }
+          }, 500);
         }
         return;
       }
